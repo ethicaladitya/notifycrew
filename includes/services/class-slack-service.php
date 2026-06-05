@@ -322,7 +322,28 @@ class Slack_Service {
 		if ( ! empty( $reminder->task_link ) ) {
 			$fields[] = array(
 				'type' => 'mrkdwn',
-				'text' => sprintf( "*%s*\n<%s|%s>", __( 'Task/Ticket/Slack Link', 'reminder-manager' ), esc_url_raw( $reminder->task_link ), __( 'Open', 'reminder-manager' ) ),
+				'text' => sprintf( "*%s*\n<%s|%s>", __( 'Task/Ticket/Slack Link', 'reminder-manager' ), esc_url_raw( $reminder->task_link ), esc_url_raw( $reminder->task_link ) ),
+			);
+		}
+
+		if ( $reminder->user_id > 0 ) {
+			$user = get_userdata( $reminder->user_id );
+			if ( $user ) {
+				$email = '' !== $reminder->member_email ? $reminder->member_email : $user->user_email;
+				$fields[] = array(
+					'type' => 'mrkdwn',
+					'text' => sprintf( "*%s*\n%s (%s)", __( 'Added by', 'reminder-manager' ), $user->display_name, $email ),
+				);
+			} elseif ( '' !== $reminder->member_email ) {
+				$fields[] = array(
+					'type' => 'mrkdwn',
+					'text' => sprintf( "*%s*\n%s", __( 'Added by', 'reminder-manager' ), $reminder->member_email ),
+				);
+			}
+		} elseif ( '' !== $reminder->member_email ) {
+			$fields[] = array(
+				'type' => 'mrkdwn',
+				'text' => sprintf( "*%s*\n%s", __( 'Added by', 'reminder-manager' ), $reminder->member_email ),
 			);
 		}
 

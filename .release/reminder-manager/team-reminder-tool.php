@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Plugin constants.
 define( 'TRT_VERSION', '1.0.1' );
-define( 'TRT_DB_VERSION', '2.3.0' );
+define( 'TRT_DB_VERSION', '2.4.0' );
 define( 'TRT_FILE', __FILE__ );
 define( 'TRT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TRT_URL', plugin_dir_url( __FILE__ ) );

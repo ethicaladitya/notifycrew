@@ -3,7 +3,7 @@
  * Plugin Name:       Team Reminder Tool
  * Plugin URI:        https://github.com/aditya/reminder-manager
  * Description:       A production-grade team reminder tool with Slack integration, tag management, and retry logic.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Aditya
@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'TRT_VERSION', '1.0.1' );
-define( 'TRT_DB_VERSION', '2.3.0' );
+define( 'TRT_VERSION', '1.0.2' );
+define( 'TRT_DB_VERSION', '2.4.0' );
 define( 'TRT_FILE', __FILE__ );
 define( 'TRT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TRT_URL', plugin_dir_url( __FILE__ ) );

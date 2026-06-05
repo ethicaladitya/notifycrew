@@ -257,7 +257,8 @@ window.trtOnViewCallback = function (response) {
 				'</div>',
 				'<p class="trt-meta">' + escapeHtml(item.display_time) + '</p>',
 				item.comments ? '<p class="trt-comments">' + escapeHtml(item.comments) + '</p>' : '',
-				item.task_link ? '<p><a href="' + escapeAttr(item.task_link) + '" target="_blank" rel="noopener noreferrer">Open link</a></p>' : '',
+				item.task_link ? '<p class="trt-card-link"><a href="' + escapeAttr(item.task_link) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.task_link) + '</a></p>' : '',
+				item.added_by ? '<p class="trt-added-by">Added by ' + escapeHtml(item.added_by) + '</p>' : '',
 				'<div class="trt-card-actions">',
 				'<button type="button" class="button" data-edit-id="' + item.id + '">' + trtFrontend.i18n.edit + '</button>',
 				'</div>'
@@ -755,11 +756,11 @@ window.trtOnViewCallback = function (response) {
 			card.className = 'trt-card trt-card--' + escapeHtml(item.status) + (isUpcoming ? ' trt-card--upcoming' : '');
 
 			var linkHtml = item.task_link
-				? '<p style="margin:8px 0 0">' +
+				? '<p class="trt-card-link" style="margin:8px 0 0">' +
 				'<a href="' + escapeAttr(item.task_link) + '" target="_blank" rel="noopener noreferrer">' +
 				'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
-				'Open link</a></p>'
-				: '';
+				escapeHtml(item.task_link) + '</a></p>'
+				: '';;
 
 			card.innerHTML =
 				'<div class="trt-card-head">' +

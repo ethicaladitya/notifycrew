@@ -258,15 +258,19 @@ function renderList() {
   state.items.forEach((item) => {
     const article = document.createElement('article');
     article.className = 'item';
+    const chipClass = `chip chip-${escapeHtml(item.status)}`;
     article.innerHTML = `
-      <div class="row">
+      <div class="item-header">
         <h4>${escapeHtml(item.title)}</h4>
-        <span class="chip">${escapeHtml(item.status)}</span>
+        <span class="${chipClass}">${escapeHtml(item.status)}</span>
       </div>
       <p class="time">${escapeHtml(item.display_time)}</p>
-      ${item.comments ? `<p>${escapeHtml(item.comments)}</p>` : ''}
-      ${item.task_link ? `<p><a href="${escapeAttr(item.task_link)}" target="_blank" rel="noopener noreferrer">Open link</a></p>` : ''}
-      <button class="ghost" type="button" data-id="${Number(item.id)}">Edit</button>
+      ${item.comments ? `<p class="item-comments">${escapeHtml(item.comments)}</p>` : ''}
+      ${item.task_link ? `<p class="item-link"><a href="${escapeAttr(item.task_link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.task_link)}</a></p>` : ''}
+      ${item.added_by ? `<p class="item-meta">Added by ${escapeHtml(item.added_by)}</p>` : ''}
+      <div class="item-footer">
+        <button class="ghost" type="button" data-id="${Number(item.id)}">Edit</button>
+      </div>
     `;
     list.appendChild(article);
   });

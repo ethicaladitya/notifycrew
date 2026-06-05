@@ -60,6 +60,7 @@ class Reminder_Service {
 			array(
 				'team_id'         => $team_id,
 				'user_id'         => $user_id,
+				'member_email'    => $member_email,
 				'title'           => sanitize_text_field( $data['title'] ?? '' ),
 				'remind_at'       => sanitize_text_field( $data['remind_at'] ?? '' ),
 				'task_link'       => esc_url_raw( $data['task_link'] ?? '' ),
@@ -68,7 +69,7 @@ class Reminder_Service {
 				'attempts'        => 0,
 				'next_attempt_at' => null,
 			),
-			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
 		);
 
 		if ( false === $inserted ) {
@@ -275,6 +276,10 @@ class Reminder_Service {
 		if ( isset( $data['comments'] ) ) {
 			$update['comments'] = sanitize_textarea_field( $data['comments'] );
 			$format[]           = '%s';
+		}
+		if ( isset( $data['member_email'] ) ) {
+			$update['member_email'] = sanitize_email( (string) $data['member_email'] );
+			$format[]               = '%s';
 		}
 		if ( isset( $data['status'] ) ) {
 			$allowed = array( 'pending', 'sent', 'completed' );

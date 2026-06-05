@@ -387,10 +387,12 @@
 
 .trt-card {
 	border-radius: 14px;
-	padding: 14px 16px;
+	padding: 16px 18px;
 	background: #ffffff;
 	border: 1px solid #d9e4ee;
 	transition: background 0.2s, border-color 0.2s;
+	display: grid;
+	gap: 0;
 }
 
 .trt-card:hover {
@@ -403,7 +405,7 @@
 	justify-content: space-between;
 	align-items: flex-start;
 	gap: 10px;
-	margin-bottom: 6px;
+	margin-bottom: 4px;
 }
 
 .trt-card h4 {
@@ -411,7 +413,43 @@
 	font-size: 15px;
 	font-weight: 600;
 	color: #1f2937;
-	line-height: 1.3;
+	line-height: 1.35;
+}
+
+.trt-meta {
+	margin: 4px 0 0;
+	font-size: 11.5px;
+	color: #64748b;
+	font-family: 'IBM Plex Mono', monospace, sans-serif;
+}
+
+.trt-comments {
+	margin: 8px 0 0;
+	font-size: 13px;
+	color: #475569;
+	line-height: 1.55;
+}
+
+.trt-card-link {
+	margin: 7px 0 0;
+	word-break: break-all;
+}
+
+.trt-card-link a {
+	color: #2563eb;
+	font-size: 12.5px;
+	text-decoration: none;
+}
+
+.trt-card-link a:hover {
+	text-decoration: underline;
+}
+
+.trt-added-by {
+	margin: 6px 0 0;
+	font-size: 11.5px;
+	color: #94a3b8;
+	font-style: italic;
 }
 
 .trt-chip {
@@ -468,7 +506,9 @@
 .trt-card-actions {
 	display: flex;
 	justify-content: flex-end;
-	margin-top: 10px;
+	margin-top: 12px;
+	padding-top: 10px;
+	border-top: 1px solid #eef3f8;
 }
 
 .trt-card-actions .button,

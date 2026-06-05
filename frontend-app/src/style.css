@@ -193,49 +193,124 @@ button.ghost {
 
 .list {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.75rem;
+  max-height: 72vh;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 99px;
 }
 
 .item {
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 0.75rem;
+  border-radius: 16px;
+  padding: 1rem 1.1rem;
   background: #fff;
   animation: fadeUp 280ms ease;
+  display: grid;
+  gap: 0;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
 }
 
 .item h4 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.96rem;
+  line-height: 1.35;
+  flex: 1;
 }
 
 .item .time {
-  margin: 0.3rem 0;
-  font-size: 0.86rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
   color: var(--muted);
   font-family: 'IBM Plex Mono', monospace;
 }
 
-.item .row {
+.item .item-comments {
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.item .item-link {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+
+.item .item-link a {
+  color: #1b5f99;
+  text-decoration: none;
+}
+
+.item .item-link a:hover {
+  text-decoration: underline;
+}
+
+.item .item-meta {
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.item-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
 }
 
 .chip {
   display: inline-flex;
   padding: 0.22rem 0.6rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   font-family: 'IBM Plex Mono', monospace;
-  background: var(--accent-soft);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chip-pending {
+  background: #fff3e0;
+  color: #7f4f00;
+}
+
+.chip-sent {
+  background: #e6f4ea;
+  color: #1a6630;
+}
+
+.chip-failed {
+  background: #fce8e6;
   color: #7f2f12;
 }
 
-.item a {
-  color: #1b5f99;
+.chip-completed {
+  background: #e8f0fe;
+  color: #1a3c7a;
 }
 
 .hidden {

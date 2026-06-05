@@ -117,6 +117,7 @@ class Database {
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			team_id BIGINT(20) UNSIGNED NOT NULL,
 			user_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
+			member_email VARCHAR(254) NOT NULL DEFAULT '',
 			title VARCHAR(255) NOT NULL DEFAULT '',
 			remind_at DATETIME NOT NULL,
 			task_link VARCHAR(2083) NOT NULL DEFAULT '',
@@ -155,9 +156,16 @@ class Database {
 	}
 
 	/**
-	 * Drop all plugin tables. Called from uninstall.php.
+	 * Drop all plugin tables.
+	 *
+	 * This method is intentionally limited to uninstall context so activation
+	 * and deactivation flows can never remove persisted reminder data.
 	 */
 	public static function drop_tables(): void {
+		if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+			return;
+		}
+
 		global $wpdb;
 
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- Table names are derived from $wpdb->prefix, safe.

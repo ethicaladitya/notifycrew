@@ -554,6 +554,19 @@ class Rest_Service {
 		$datetime  = $timestamp ? gmdate( 'Y-m-d\\TH:i', $timestamp ) : '';
 		$display   = $timestamp ? gmdate( 'Y-m-d H:i:s', $timestamp ) . ' UTC' : (string) $reminder->remind_at;
 
+		$added_by = '';
+		if ( $reminder->user_id > 0 ) {
+			$user = get_userdata( $reminder->user_id );
+			if ( $user ) {
+				$email    = '' !== $reminder->member_email ? $reminder->member_email : $user->user_email;
+				$added_by = $user->display_name . ' (' . $email . ')';
+			} elseif ( '' !== $reminder->member_email ) {
+				$added_by = $reminder->member_email;
+			}
+		} elseif ( '' !== $reminder->member_email ) {
+			$added_by = $reminder->member_email;
+		}
+
 		return array(
 			'id'             => (int) $reminder->id,
 			'team_id'        => (int) $reminder->team_id,
@@ -565,6 +578,7 @@ class Rest_Service {
 			'comments'       => (string) $reminder->comments,
 			'status'         => (string) $reminder->status,
 			'attempts'       => (int) $reminder->attempts,
+			'added_by'       => $added_by,
 		);
 	}
 
