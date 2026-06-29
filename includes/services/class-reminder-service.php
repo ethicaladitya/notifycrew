@@ -474,6 +474,53 @@ class Reminder_Service {
 				sanitize_text_field( $reason )
 			)
 		);
+
+		if ( $new_attempts >= 2 ) {
+			$this->notify_admin_of_failure( $reminder, $new_attempts, $reason );
+		}
+	}
+
+	/**
+	 * Email the site admin when a reminder has hit 2+ consecutive Slack failures.
+	 *
+	 * @param \Aditya\ReminderTool\Models\Reminder $reminder    The failing reminder.
+	 * @param int                                   $attempts    Total attempts so far.
+	 * @param string                                $reason      Latest error message.
+	 */
+	private function notify_admin_of_failure( $reminder, int $attempts, string $reason ): void {
+		$admin_email = get_option( 'admin_email' );
+		if ( ! is_email( $admin_email ) ) {
+			return;
+		}
+
+		$site_name    = get_bloginfo( 'name' );
+		$settings_url = add_query_arg( 'page', 'trt-settings', admin_url( 'admin.php' ) );
+		$reminders_url = add_query_arg( 'page', 'trt-reminders', admin_url( 'admin.php' ) );
+
+		/* translators: %s: site name */
+		$subject = sprintf( __( '[%s] Reminder Manager: Slack delivery failing', 'reminder-manager' ), $site_name );
+
+		$body = sprintf(
+			/* translators: 1: reminder title, 2: reminder id, 3: attempts, 4: max, 5: error, 6: reminders url, 7: settings url */
+			__(
+				"A reminder has failed to deliver to Slack %2\$d time(s) and needs your attention.\n\n" .
+				"Reminder : %1\$s (ID #%3\$d)\n" .
+				"Attempts : %2\$d / %4\$d\n" .
+				"Last error: %5\$s\n\n" .
+				"View reminders : %6\$s\n" .
+				"Check Slack settings: %7\$s",
+				'reminder-manager'
+			),
+			$reminder->title,
+			$attempts,
+			$reminder->id,
+			self::MAX_ATTEMPTS,
+			$reason,
+			$reminders_url,
+			$settings_url
+		);
+
+		wp_mail( $admin_email, $subject, $body );
 	}
 
 	/**
@@ -496,6 +543,25 @@ class Reminder_Service {
 			),
 			array( '%d', '%d', '%s', '%s' )
 		);
+	}
+
+	/**
+	 * Return the most recent failure reason for a reminder, or empty string if none.
+	 *
+	 * @param int $reminder_id Reminder id.
+	 * @return string
+	 */
+	public function get_last_failure_reason( int $reminder_id ): string {
+		global $wpdb;
+		$message = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT message FROM {$wpdb->prefix}trt_logs
+				 WHERE reminder_id = %d AND event IN ('retry_scheduled','completed')
+				 ORDER BY created_at DESC LIMIT 1",
+				$reminder_id
+			)
+		);
+		return (string) ( $message ?? '' );
 	}
 
 	/**

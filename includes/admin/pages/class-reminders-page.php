@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Aditya\ReminderTool\Services\Reminder_Service;
 use Aditya\ReminderTool\Services\Team_Service;
+use Aditya\ReminderTool\Services\Cron_Service;
 
 /**
  * Class Reminders_Page
@@ -128,6 +129,7 @@ class Reminders_Page {
 		$id = absint( $_POST['reminder_id'] ?? 0 );
 		if ( $id > 0 ) {
 			Reminder_Service::get_instance()->queue_retry( $id );
+			Cron_Service::get_instance()->process();
 		}
 
 		wp_safe_redirect( add_query_arg( array( 'page' => 'trt-reminders', 'retried' => '1' ), admin_url( 'admin.php' ) ) );
@@ -216,7 +218,17 @@ class Reminders_Page {
 								<td><?php echo esc_html( $team ? $team->name : '—' ); ?></td>
 								<td><?php echo esc_html( gmdate( 'Y-m-d H:i:s', strtotime( $reminder->remind_at . ' UTC' ) ) . ' UTC' ); ?></td>
 								<td><span class="trt-status trt-status--<?php echo esc_attr( $reminder->status ); ?>"><?php echo esc_html( ucfirst( $reminder->status ) ); ?></span></td>
-								<td><?php echo esc_html( (int) $reminder->attempts ); ?>/<?php echo esc_html( (int) Reminder_Service::MAX_ATTEMPTS ); ?></td>
+								<td>
+									<?php echo esc_html( (int) $reminder->attempts ); ?>/<?php echo esc_html( (int) Reminder_Service::MAX_ATTEMPTS ); ?>
+									<?php
+									if ( (int) $reminder->attempts > 0 ) {
+										$reason = $service->get_last_failure_reason( (int) $reminder->id );
+										if ( '' !== $reason ) {
+											echo '<br/><small style="color:#b32d2e;" title="' . esc_attr( $reason ) . '">' . esc_html( wp_trim_words( $reason, 10 ) ) . '</small>';
+										}
+									}
+									?>
+								</td>
 								<td>
 									<a href="<?php echo esc_url( add_query_arg( array( 'page' => 'trt-add-reminder', 'edit' => $reminder->id ), admin_url( 'admin.php' ) ) ); ?>"><?php esc_html_e( 'Edit', 'reminder-manager' ); ?></a>
 									<?php if ( 'pending' === $reminder->status && (int) $reminder->attempts < Reminder_Service::MAX_ATTEMPTS ) : ?>

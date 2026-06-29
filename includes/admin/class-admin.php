@@ -44,11 +44,44 @@ class Admin {
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'add_menu_pages' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+		add_action( 'admin_notices', array( $this, 'maybe_show_slack_failure_notice' ) );
 
 		// Register sub-page handlers.
 		Settings_Page::get_instance()->register();
 		Reminders_Page::get_instance()->register();
 		Teams_Page::get_instance()->register();
+	}
+
+	/**
+	 * Show an admin notice if Slack sends have been failing in the last 24 hours.
+	 */
+	public function maybe_show_slack_failure_notice(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$recent_failure = $wpdb->get_row(
+			"SELECT reminder_id, message, created_at
+			 FROM {$wpdb->prefix}trt_logs
+			 WHERE event IN ('retry_scheduled','completed')
+			   AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+			 ORDER BY created_at DESC LIMIT 1"
+		);
+
+		if ( ! $recent_failure ) {
+			return;
+		}
+
+		$settings_url = add_query_arg( 'page', 'trt-settings', admin_url( 'admin.php' ) );
+		printf(
+			'<div class="notice notice-error"><p><strong>%s</strong> %s &mdash; <em>%s</em> &mdash; <a href="%s">%s</a></p></div>',
+			esc_html__( 'Reminder Manager:', 'reminder-manager' ),
+			esc_html__( 'Recent Slack delivery failures detected.', 'reminder-manager' ),
+			esc_html( $recent_failure->message ),
+			esc_url( $settings_url ),
+			esc_html__( 'Check Slack Settings', 'reminder-manager' )
+		);
 	}
 
 	/**

@@ -116,6 +116,8 @@ class Cron_Service {
 				$reminder_service->mark_sent( $reminder->id );
 			} else {
 				$error_message = is_wp_error( $result ) ? $result->get_error_message() : __( 'Unknown error', 'reminder-manager' );
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( '[Reminder Manager] Slack send failed for reminder #%d ("%s"): %s', $reminder->id, $reminder->title, $error_message ) );
 				$reminder_service->mark_failed_attempt( $reminder->id, $error_message );
 			}
 		}
