@@ -21,6 +21,7 @@ zip -r "$OUTPUT_ZIP" "$PROJECT_NAME" \
   "${PROJECT_NAME}/composer.json" \
   "${PROJECT_NAME}/composer.lock" \
   "${PROJECT_NAME}/build_distribution_zip.sh" \
+  "${PROJECT_NAME}/.gitignore" \
   "${PROJECT_NAME}/*.zip" \
   "${PROJECT_NAME}/.DS_Store" \
   "${PROJECT_NAME}/**/.DS_Store"
