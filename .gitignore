@@ -2,7 +2,7 @@ vendor/
 .wordpress-org/
 .release/
 dist/
+frontend-app/
 *.zip
 .DS_Store
-frontend-app/
 composer.lock
