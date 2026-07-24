@@ -2,22 +2,22 @@
 /**
  * Main plugin bootstrap class.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool;
+namespace Aditya\NotifyCrew;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Aditya\ReminderTool\Database\Database;
-use Aditya\ReminderTool\Services\Cron_Service;
-use Aditya\ReminderTool\Services\Frontend_Service;
-use Aditya\ReminderTool\Services\Rest_Service;
-use Aditya\ReminderTool\Services\Slack_Service;
-use Aditya\ReminderTool\Admin\Admin;
+use Aditya\NotifyCrew\Database\Database;
+use Aditya\NotifyCrew\Services\Cron_Service;
+use Aditya\NotifyCrew\Services\Frontend_Service;
+use Aditya\NotifyCrew\Services\Rest_Service;
+use Aditya\NotifyCrew\Services\Slack_Service;
+use Aditya\NotifyCrew\Admin\Admin;
 
 /**
  * Class Plugin

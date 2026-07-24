@@ -1,4 +1,4 @@
-# Agent Context: Team Reminder Tool
+# Agent Context: NotifyCrew
 
 Use this file as a concise orientation before making code changes.
 
@@ -9,7 +9,7 @@ Use this file as a concise orientation before making code changes.
 - Retries failed sends with exponential backoff.
 
 ## Core Conventions
-- Namespace: Aditya\\ReminderTool\\
+- Namespace: Aditya\\NotifyCrew\\
 - WordPress coding style and APIs throughout.
 - Security baseline:
   - direct-access guards
@@ -18,14 +18,14 @@ Use this file as a concise orientation before making code changes.
   - sanitize input / escape output
 
 ## Important Integration Points
-- Cron hook: trt_process_reminders
-- REST namespace: trt/v1
-- Tables: trt_reminders, trt_tags, trt_logs
+- Cron hook: ncrw_process_reminders
+- REST namespace: ncrw/v1
+- Tables: ncrw_reminders, ncrw_tags, ncrw_logs
 - Slack webhook is encrypted at rest; never reveal in UI.
 
 ## Safe Change Strategy
 1. Find affected layer (admin page, service, DB, or REST).
 2. Keep data contracts aligned across model/service/admin rendering.
-3. Preserve translation wrappers and text domain team-reminder-tool.
+3. Preserve translation wrappers and text domain notifycrew.
 4. Validate that retries, statuses, and logs remain consistent.
 5. Avoid broad refactors unless explicitly requested.

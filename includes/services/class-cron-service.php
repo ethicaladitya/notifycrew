@@ -2,10 +2,10 @@
 /**
  * WP Cron service — schedules and processes reminders.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Services;
+namespace Aditya\NotifyCrew\Services;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -18,10 +18,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Cron_Service {
 
 	/** Cron hook name. */
-	const HOOK = 'trt_process_reminders';
+	const HOOK = 'ncrw_process_reminders';
 
 	/** Cron schedule interval key. */
-	const INTERVAL = 'trt_five_minutes';
+	const INTERVAL = 'ncrw_five_minutes';
 
 	/**
 	 * Singleton instance.
@@ -59,7 +59,7 @@ class Cron_Service {
 		if ( ! isset( $schedules[ self::INTERVAL ] ) ) {
 			$schedules[ self::INTERVAL ] = array(
 				'interval' => 5 * MINUTE_IN_SECONDS,
-				'display'  => __( 'Every 5 Minutes', 'reminder-manager' ),
+				'display'  => __( 'Every 5 Minutes', 'notifycrew' ),
 			);
 		}
 		return $schedules;
@@ -115,7 +115,7 @@ class Cron_Service {
 			if ( true === $result ) {
 				$reminder_service->mark_sent( $reminder->id );
 			} else {
-				$error_message = is_wp_error( $result ) ? $result->get_error_message() : __( 'Unknown error', 'reminder-manager' );
+				$error_message = is_wp_error( $result ) ? $result->get_error_message() : __( 'Unknown error', 'notifycrew' );
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 				error_log( sprintf( '[Reminder Manager] Slack send failed for reminder #%d ("%s"): %s', $reminder->id, $reminder->title, $error_message ) );
 				$reminder_service->mark_failed_attempt( $reminder->id, $error_message );

@@ -2,17 +2,17 @@
 /**
  * Slack delivery service.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Services;
+namespace Aditya\NotifyCrew\Services;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Aditya\ReminderTool\Models\Reminder;
+use Aditya\NotifyCrew\Models\Reminder;
 
 /**
  * Class Slack_Service
@@ -20,16 +20,16 @@ use Aditya\ReminderTool\Models\Reminder;
 class Slack_Service {
 
 	/** Auth mode option key. */
-	const MODE_OPTION = 'trt_slack_mode';
+	const MODE_OPTION = 'ncrw_slack_mode';
 
 	/** Encrypted webhook option key. */
-	const WEBHOOK_OPTION = 'trt_slack_webhook';
+	const WEBHOOK_OPTION = 'ncrw_slack_webhook';
 
 	/** Encrypted bot token option key. */
-	const BOT_TOKEN_OPTION = 'trt_slack_bot_token';
+	const BOT_TOKEN_OPTION = 'ncrw_slack_bot_token';
 
 	/** Optional username override. */
-	const USERNAME_OPTION = 'trt_slack_username';
+	const USERNAME_OPTION = 'ncrw_slack_username';
 
 	/** Supported auth modes. */
 	const MODE_WEBHOOK = 'webhook';
@@ -60,15 +60,15 @@ class Slack_Service {
 	 * @return true|\WP_Error
 	 */
 	public function send( Reminder $reminder ) {
-		$team          = Team_Service::get_instance()->get( $reminder->team_id );
-		$team_channel  = $team ? trim( (string) $team->slack_channel ) : '';
+		$team           = Team_Service::get_instance()->get( $reminder->team_id );
+		$team_channel   = $team ? trim( (string) $team->slack_channel ) : '';
 		$global_channel = trim( $this->get_channel() );
-		$channel       = '' !== $team_channel ? $team_channel : $global_channel;
-		$mode = $this->get_mode();
-		$mention_tag = $team ? Team_Service::get_instance()->get_team_mention_tag( (int) $reminder->team_id ) : '';
+		$channel        = '' !== $team_channel ? $team_channel : $global_channel;
+		$mode           = $this->get_mode();
+		$mention_tag    = $team ? Team_Service::get_instance()->get_team_mention_tag( (int) $reminder->team_id ) : '';
 
 		if ( '' === $channel && self::MODE_WEBHOOK !== $mode ) {
-			return new \WP_Error( 'missing_team_channel', __( 'No Slack channel configured. Set a Team Slack Channel or a global fallback channel.', 'reminder-manager' ) );
+			return new \WP_Error( 'missing_team_channel', __( 'No Slack channel configured. Set a Team Slack Channel or a global fallback channel.', 'notifycrew' ) );
 		}
 
 		if ( self::MODE_BOT === $mode ) {
@@ -114,8 +114,8 @@ class Slack_Service {
 			update_option( self::MODE_OPTION, self::MODE_WEBHOOK, false );
 		}
 
-		delete_option( 'trt_slack_relay_url' );
-		delete_option( 'trt_slack_relay_key' );
+		delete_option( 'ncrw_slack_relay_url' );
+		delete_option( 'ncrw_slack_relay_key' );
 	}
 
 	/**
@@ -201,7 +201,7 @@ class Slack_Service {
 	 * @param string $channel Channel.
 	 */
 	public function save_channel( string $channel ): void {
-		update_option( 'trt_slack_channel', sanitize_text_field( $channel ), false );
+		update_option( 'ncrw_slack_channel', sanitize_text_field( $channel ), false );
 	}
 
 	/**
@@ -210,7 +210,7 @@ class Slack_Service {
 	 * @return string
 	 */
 	public function get_channel(): string {
-		return (string) get_option( 'trt_slack_channel', '' );
+		return (string) get_option( 'ncrw_slack_channel', '' );
 	}
 
 	/**
@@ -224,7 +224,7 @@ class Slack_Service {
 	private function send_via_webhook( Reminder $reminder, string $channel, string $mention_tag = '' ) {
 		$webhook = $this->get_webhook();
 		if ( '' === $webhook ) {
-			return new \WP_Error( 'no_webhook', __( 'Slack webhook URL is not configured.', 'reminder-manager' ) );
+			return new \WP_Error( 'no_webhook', __( 'Slack webhook URL is not configured.', 'notifycrew' ) );
 		}
 
 		$payload  = $this->build_payload( $reminder, $channel, $mention_tag );
@@ -249,7 +249,7 @@ class Slack_Service {
 				'slack_error',
 				sprintf(
 					/* translators: 1: status code, 2: body */
-					__( 'Slack returned HTTP %1$d: %2$s', 'reminder-manager' ),
+					__( 'Slack returned HTTP %1$d: %2$s', 'notifycrew' ),
 					$code,
 					sanitize_text_field( $body )
 				)
@@ -270,7 +270,7 @@ class Slack_Service {
 	private function send_via_bot_token( Reminder $reminder, string $channel, string $mention_tag = '' ) {
 		$token = $this->get_bot_token();
 		if ( '' === $token ) {
-			return new \WP_Error( 'no_bot_token', __( 'Slack bot token is not configured.', 'reminder-manager' ) );
+			return new \WP_Error( 'no_bot_token', __( 'Slack bot token is not configured.', 'notifycrew' ) );
 		}
 
 		$payload  = $this->build_payload( $reminder, $channel, $mention_tag );
@@ -293,7 +293,7 @@ class Slack_Service {
 		$code = (int) wp_remote_retrieve_response_code( $response );
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( 200 !== $code || empty( $body['ok'] ) ) {
-			$error = is_array( $body ) && ! empty( $body['error'] ) ? sanitize_text_field( $body['error'] ) : __( 'Unknown Slack API error', 'reminder-manager' );
+			$error = is_array( $body ) && ! empty( $body['error'] ) ? sanitize_text_field( $body['error'] ) : __( 'Unknown Slack API error', 'notifycrew' );
 			return new \WP_Error( 'slack_api_error', $error );
 		}
 
@@ -309,47 +309,47 @@ class Slack_Service {
 	 * @return array
 	 */
 	private function build_payload( Reminder $reminder, string $channel, string $mention_tag = '' ): array {
-		$date = gmdate( 'Y-m-d H:i:s', strtotime( $reminder->remind_at . ' UTC' ) ) . ' UTC';
+		$date        = gmdate( 'Y-m-d H:i:s', strtotime( $reminder->remind_at . ' UTC' ) ) . ' UTC';
 		$text_prefix = '' !== $mention_tag ? $mention_tag . ' ' : '';
 
 		$fields = array(
 			array(
 				'type' => 'mrkdwn',
-				'text' => sprintf( "*%s*\n%s", __( 'Scheduled', 'reminder-manager' ), $date ),
+				'text' => sprintf( "*%s*\n%s", __( 'Scheduled', 'notifycrew' ), $date ),
 			),
 		);
 
 		if ( ! empty( $reminder->task_link ) ) {
 			$fields[] = array(
 				'type' => 'mrkdwn',
-				'text' => sprintf( "*%s*\n<%s|%s>", __( 'Task/Ticket/Slack Link', 'reminder-manager' ), esc_url_raw( $reminder->task_link ), esc_url_raw( $reminder->task_link ) ),
+				'text' => sprintf( "*%s*\n<%s|%s>", __( 'Task/Ticket/Slack Link', 'notifycrew' ), esc_url_raw( $reminder->task_link ), esc_url_raw( $reminder->task_link ) ),
 			);
 		}
 
 		if ( $reminder->user_id > 0 ) {
 			$user = get_userdata( $reminder->user_id );
 			if ( $user ) {
-				$email = '' !== $reminder->member_email ? $reminder->member_email : $user->user_email;
+				$email    = '' !== $reminder->member_email ? $reminder->member_email : $user->user_email;
 				$fields[] = array(
 					'type' => 'mrkdwn',
-					'text' => sprintf( "*%s*\n%s (%s)", __( 'Added by', 'reminder-manager' ), $user->display_name, $email ),
+					'text' => sprintf( "*%s*\n%s (%s)", __( 'Added by', 'notifycrew' ), $user->display_name, $email ),
 				);
 			} elseif ( '' !== $reminder->member_email ) {
 				$fields[] = array(
 					'type' => 'mrkdwn',
-					'text' => sprintf( "*%s*\n%s", __( 'Added by', 'reminder-manager' ), $reminder->member_email ),
+					'text' => sprintf( "*%s*\n%s", __( 'Added by', 'notifycrew' ), $reminder->member_email ),
 				);
 			}
 		} elseif ( '' !== $reminder->member_email ) {
 			$fields[] = array(
 				'type' => 'mrkdwn',
-				'text' => sprintf( "*%s*\n%s", __( 'Added by', 'reminder-manager' ), $reminder->member_email ),
+				'text' => sprintf( "*%s*\n%s", __( 'Added by', 'notifycrew' ), $reminder->member_email ),
 			);
 		}
 
 		$payload = array(
-			'text'    => sprintf( '%s:bell: %s', $text_prefix, $reminder->title ),
-			'blocks'  => array(
+			'text'   => sprintf( '%s:bell: %s', $text_prefix, $reminder->title ),
+			'blocks' => array(
 				array(
 					'type' => 'header',
 					'text' => array(
@@ -384,7 +384,7 @@ class Slack_Service {
 				'type' => 'section',
 				'text' => array(
 					'type' => 'mrkdwn',
-					'text' => sprintf( "*%s*\n%s", __( 'Notes', 'reminder-manager' ), $reminder->comments ),
+					'text' => sprintf( "*%s*\n%s", __( 'Notes', 'notifycrew' ), $reminder->comments ),
 				),
 			);
 		}

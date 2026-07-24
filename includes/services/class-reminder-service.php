@@ -2,17 +2,17 @@
 /**
  * Reminder service - team-scoped CRUD and worker lifecycle.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Services;
+namespace Aditya\NotifyCrew\Services;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Aditya\ReminderTool\Models\Reminder;
+use Aditya\NotifyCrew\Models\Reminder;
 
 /**
  * Class Reminder_Service
@@ -55,8 +55,9 @@ class Reminder_Service {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$inserted = $wpdb->insert(
-			$wpdb->prefix . 'trt_reminders',
+			$wpdb->prefix . 'ncrw_reminders',
 			array(
 				'team_id'         => $team_id,
 				'user_id'         => $user_id,
@@ -77,7 +78,7 @@ class Reminder_Service {
 		}
 
 		$new_id = (int) $wpdb->insert_id;
-		$this->log( $team_id, $new_id, 'created', __( 'Reminder created.', 'reminder-manager' ) );
+		$this->log( $team_id, $new_id, 'created', __( 'Reminder created.', 'notifycrew' ) );
 		return $new_id;
 	}
 
@@ -89,9 +90,10 @@ class Reminder_Service {
 	 */
 	public function get( int $id ): ?Reminder {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}trt_reminders WHERE id = %d LIMIT 1",
+				"SELECT * FROM {$wpdb->prefix}ncrw_reminders WHERE id = %d LIMIT 1",
 				$id
 			)
 		);
@@ -117,11 +119,11 @@ class Reminder_Service {
 			'orderby'  => 'remind_at',
 			'order'    => 'DESC',
 		);
-		$args = wp_parse_args( $args, $defaults );
+		$args     = wp_parse_args( $args, $defaults );
 
 		$actor_user  = isset( $args['_actor_user_id'] ) ? absint( $args['_actor_user_id'] ) : get_current_user_id();
 		$actor_email = sanitize_email( (string) ( $args['_actor_email'] ?? '' ) );
-		$team_filter  = absint( $args['team_id'] );
+		$team_filter = absint( $args['team_id'] );
 
 		$where  = ' WHERE 1=1';
 		$values = array();
@@ -137,10 +139,10 @@ class Reminder_Service {
 			if ( empty( $teams ) ) {
 				return array();
 			}
-			$team_ids      = wp_list_pluck( $teams, 'id' );
-			$placeholders  = implode( ',', array_fill( 0, count( $team_ids ), '%d' ) );
-			$where        .= " AND team_id IN ({$placeholders})";
-			$values        = array_merge( $values, array_map( 'intval', $team_ids ) );
+			$team_ids     = wp_list_pluck( $teams, 'id' );
+			$placeholders = implode( ',', array_fill( 0, count( $team_ids ), '%d' ) );
+			$where       .= " AND team_id IN ({$placeholders})";
+			$values       = array_merge( $values, array_map( 'intval', $team_ids ) );
 		}
 
 		if ( ! empty( $args['status'] ) ) {
@@ -160,13 +162,14 @@ class Reminder_Service {
 		$offset          = ( max( 1, (int) $args['page'] ) - 1 ) * $per_page;
 
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$sql = "SELECT * FROM {$wpdb->prefix}trt_reminders {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+		$sql = "SELECT * FROM {$wpdb->prefix}ncrw_reminders {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
 		// phpcs:enable
 
 		$values[] = $per_page;
 		$values[] = $offset;
 
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $values ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $values ) );
 		return array_map( array( Reminder::class, 'from_row' ), $rows ?: array() );
 	}
 
@@ -190,8 +193,8 @@ class Reminder_Service {
 
 		$actor_user  = isset( $list_args['_actor_user_id'] ) ? absint( $list_args['_actor_user_id'] ) : get_current_user_id();
 		$actor_email = sanitize_email( (string) ( $list_args['_actor_email'] ?? '' ) );
-		$where        = ' WHERE 1=1';
-		$values       = array();
+		$where       = ' WHERE 1=1';
+		$values      = array();
 
 		$team_filter = absint( $list_args['team_id'] );
 		if ( $team_filter > 0 ) {
@@ -205,10 +208,10 @@ class Reminder_Service {
 			if ( empty( $teams ) ) {
 				return 0;
 			}
-			$team_ids      = wp_list_pluck( $teams, 'id' );
-			$placeholders  = implode( ',', array_fill( 0, count( $team_ids ), '%d' ) );
-			$where        .= " AND team_id IN ({$placeholders})";
-			$values        = array_merge( $values, array_map( 'intval', $team_ids ) );
+			$team_ids     = wp_list_pluck( $teams, 'id' );
+			$placeholders = implode( ',', array_fill( 0, count( $team_ids ), '%d' ) );
+			$where       .= " AND team_id IN ({$placeholders})";
+			$values       = array_merge( $values, array_map( 'intval', $team_ids ) );
 		}
 
 		if ( ! empty( $list_args['status'] ) ) {
@@ -220,12 +223,14 @@ class Reminder_Service {
 			$values[] = absint( $list_args['user_id'] );
 		}
 
-		$sql = "SELECT COUNT(*) FROM {$wpdb->prefix}trt_reminders {$where}";
+		$sql = "SELECT COUNT(*) FROM {$wpdb->prefix}ncrw_reminders {$where}";
 		if ( empty( $values ) ) {
-			return (int) $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+			return (int) $wpdb->get_var( $sql );
 		}
 
-		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $values ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $values ) );
 	}
 
 	/**
@@ -295,8 +300,9 @@ class Reminder_Service {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
-			$wpdb->prefix . 'trt_reminders',
+			$wpdb->prefix . 'ncrw_reminders',
 			$update,
 			array( 'id' => $id ),
 			$format,
@@ -325,8 +331,10 @@ class Reminder_Service {
 			return false;
 		}
 
-		$wpdb->delete( $wpdb->prefix . 'trt_logs', array( 'reminder_id' => $id ), array( '%d' ) );
-		$result = $wpdb->delete( $wpdb->prefix . 'trt_reminders', array( 'id' => $id ), array( '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $wpdb->prefix . 'ncrw_logs', array( 'reminder_id' => $id ), array( '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->delete( $wpdb->prefix . 'ncrw_reminders', array( 'id' => $id ), array( '%d' ) );
 		return false !== $result;
 	}
 
@@ -351,8 +359,9 @@ class Reminder_Service {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
-			$wpdb->prefix . 'trt_reminders',
+			$wpdb->prefix . 'ncrw_reminders',
 			array( 'next_attempt_at' => gmdate( 'Y-m-d H:i:s' ) ),
 			array( 'id' => $id ),
 			array( '%s' ),
@@ -370,11 +379,12 @@ class Reminder_Service {
 	public function get_due_for_processing(): array {
 		global $wpdb;
 
-		$now  = gmdate( 'Y-m-d H:i:s' );
+		$now = gmdate( 'Y-m-d H:i:s' );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT *
-				 FROM {$wpdb->prefix}trt_reminders
+				 FROM {$wpdb->prefix}ncrw_reminders
 				 WHERE status = 'pending'
 				   AND remind_at <= %s
 				   AND attempts < %d
@@ -402,8 +412,9 @@ class Reminder_Service {
 			return;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
-			$wpdb->prefix . 'trt_reminders',
+			$wpdb->prefix . 'ncrw_reminders',
 			array(
 				'status'          => 'sent',
 				'next_attempt_at' => null,
@@ -413,7 +424,7 @@ class Reminder_Service {
 			array( '%d' )
 		);
 
-		$this->log( $reminder->team_id, $id, 'sent', __( 'Reminder sent to Slack.', 'reminder-manager' ) );
+		$this->log( $reminder->team_id, $id, 'sent', __( 'Reminder sent to Slack.', 'notifycrew' ) );
 	}
 
 	/**
@@ -432,8 +443,9 @@ class Reminder_Service {
 
 		$new_attempts = $reminder->attempts + 1;
 		if ( $new_attempts >= self::MAX_ATTEMPTS ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->update(
-				$wpdb->prefix . 'trt_reminders',
+				$wpdb->prefix . 'ncrw_reminders',
 				array(
 					'attempts'        => $new_attempts,
 					'status'          => 'completed',
@@ -444,15 +456,16 @@ class Reminder_Service {
 				array( '%d' )
 			);
 
-			$this->log( $reminder->team_id, $id, 'completed', __( 'Max attempts reached. Marked completed.', 'reminder-manager' ) );
+			$this->log( $reminder->team_id, $id, 'completed', __( 'Max attempts reached. Marked completed.', 'notifycrew' ) );
 			return;
 		}
 
 		$delay_minutes = (int) pow( 2, $new_attempts );
 		$next_attempt  = gmdate( 'Y-m-d H:i:s', time() + ( $delay_minutes * MINUTE_IN_SECONDS ) );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
-			$wpdb->prefix . 'trt_reminders',
+			$wpdb->prefix . 'ncrw_reminders',
 			array(
 				'attempts'        => $new_attempts,
 				'next_attempt_at' => $next_attempt,
@@ -468,7 +481,7 @@ class Reminder_Service {
 			'retry_scheduled',
 			sprintf(
 				/* translators: 1: attempts, 2: minutes, 3: reason */
-				__( 'Attempt %1$d failed. Next attempt in %2$d minutes. Reason: %3$s', 'reminder-manager' ),
+				__( 'Attempt %1$d failed. Next attempt in %2$d minutes. Reason: %3$s', 'notifycrew' ),
 				$new_attempts,
 				$delay_minutes,
 				sanitize_text_field( $reason )
@@ -483,9 +496,9 @@ class Reminder_Service {
 	/**
 	 * Email the site admin when a reminder has hit 2+ consecutive Slack failures.
 	 *
-	 * @param \Aditya\ReminderTool\Models\Reminder $reminder    The failing reminder.
-	 * @param int                                   $attempts    Total attempts so far.
-	 * @param string                                $reason      Latest error message.
+	 * @param \Aditya\NotifyCrew\Models\Reminder $reminder    The failing reminder.
+	 * @param int                                $attempts    Total attempts so far.
+	 * @param string                             $reason      Latest error message.
 	 */
 	private function notify_admin_of_failure( $reminder, int $attempts, string $reason ): void {
 		$admin_email = get_option( 'admin_email' );
@@ -493,24 +506,16 @@ class Reminder_Service {
 			return;
 		}
 
-		$site_name    = get_bloginfo( 'name' );
-		$settings_url = add_query_arg( 'page', 'trt-settings', admin_url( 'admin.php' ) );
-		$reminders_url = add_query_arg( 'page', 'trt-reminders', admin_url( 'admin.php' ) );
+		$site_name     = get_bloginfo( 'name' );
+		$settings_url  = add_query_arg( 'page', 'ncrw-settings', admin_url( 'admin.php' ) );
+		$reminders_url = add_query_arg( 'page', 'ncrw-reminders', admin_url( 'admin.php' ) );
 
 		/* translators: %s: site name */
-		$subject = sprintf( __( '[%s] Reminder Manager: Slack delivery failing', 'reminder-manager' ), $site_name );
+		$subject = sprintf( __( '[%s] Reminder Manager: Slack delivery failing', 'notifycrew' ), $site_name );
 
 		$body = sprintf(
 			/* translators: 1: reminder title, 2: reminder id, 3: attempts, 4: max, 5: error, 6: reminders url, 7: settings url */
-			__(
-				"A reminder has failed to deliver to Slack %2\$d time(s) and needs your attention.\n\n" .
-				"Reminder : %1\$s (ID #%3\$d)\n" .
-				"Attempts : %2\$d / %4\$d\n" .
-				"Last error: %5\$s\n\n" .
-				"View reminders : %6\$s\n" .
-				"Check Slack settings: %7\$s",
-				'reminder-manager'
-			),
+			__( "A reminder has failed to deliver to Slack %2\$d time(s) and needs your attention.\n\nReminder : %1\$s (ID #%3\$d)\nAttempts : %2\$d / %4\$d\nLast error: %5\$s\n\nView reminders : %6\$s\nCheck Slack settings: %7\$s", 'notifycrew' ),
 			$reminder->title,
 			$attempts,
 			$reminder->id,
@@ -533,8 +538,9 @@ class Reminder_Service {
 	 */
 	public function log( int $team_id, int $reminder_id, string $event, string $message ): void {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->insert(
-			$wpdb->prefix . 'trt_logs',
+			$wpdb->prefix . 'ncrw_logs',
 			array(
 				'team_id'     => $team_id,
 				'reminder_id' => $reminder_id,
@@ -553,9 +559,10 @@ class Reminder_Service {
 	 */
 	public function get_last_failure_reason( int $reminder_id ): string {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$message = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT message FROM {$wpdb->prefix}trt_logs
+				"SELECT message FROM {$wpdb->prefix}ncrw_logs
 				 WHERE reminder_id = %d AND event IN ('retry_scheduled','completed')
 				 ORDER BY created_at DESC LIMIT 1",
 				$reminder_id
@@ -572,9 +579,10 @@ class Reminder_Service {
 	 */
 	public function get_logs( int $reminder_id ): array {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}trt_logs WHERE reminder_id = %d ORDER BY created_at DESC",
+				"SELECT * FROM {$wpdb->prefix}ncrw_logs WHERE reminder_id = %d ORDER BY created_at DESC",
 				$reminder_id
 			)
 		) ?: array();

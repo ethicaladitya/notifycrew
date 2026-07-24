@@ -4,17 +4,17 @@
  *
  * Supports memberships by either WordPress user ID or plain email.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Services;
+namespace Aditya\NotifyCrew\Services;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Aditya\ReminderTool\Models\Team;
+use Aditya\NotifyCrew\Models\Team;
 
 /**
  * Class Team_Service
@@ -60,8 +60,9 @@ class Team_Service {
 			++$counter;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
-			$wpdb->prefix . 'trt_teams',
+			$wpdb->prefix . 'ncrw_teams',
 			array(
 				'name'       => $name,
 				'slug'       => $slug,
@@ -120,8 +121,9 @@ class Team_Service {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$result = $wpdb->update(
-			$wpdb->prefix . 'trt_teams',
+			$wpdb->prefix . 'ncrw_teams',
 			$update,
 			array( 'id' => $team_id ),
 			$format,
@@ -140,10 +142,13 @@ class Team_Service {
 	public function delete_team( int $team_id ): bool {
 		global $wpdb;
 
-		$wpdb->delete( $wpdb->prefix . 'trt_team_users', array( 'team_id' => $team_id ), array( '%d' ) );
-		$wpdb->delete( $wpdb->prefix . 'trt_reminders', array( 'team_id' => $team_id ), array( '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $wpdb->prefix . 'ncrw_team_users', array( 'team_id' => $team_id ), array( '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete( $wpdb->prefix . 'ncrw_reminders', array( 'team_id' => $team_id ), array( '%d' ) );
 
-		$result = $wpdb->delete( $wpdb->prefix . 'trt_teams', array( 'id' => $team_id ), array( '%d' ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->delete( $wpdb->prefix . 'ncrw_teams', array( 'id' => $team_id ), array( '%d' ) );
 		return false !== $result;
 	}
 
@@ -156,9 +161,10 @@ class Team_Service {
 	public function get_team( int $team_id ): ?Team {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}trt_teams WHERE id = %d LIMIT 1",
+				"SELECT * FROM {$wpdb->prefix}ncrw_teams WHERE id = %d LIMIT 1",
 				$team_id
 			)
 		);
@@ -190,7 +196,8 @@ class Team_Service {
 		$email   = sanitize_email( (string) ( $email ?? '' ) );
 
 		if ( $this->is_super_admin( $user_id ) ) {
-			$rows = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}trt_teams ORDER BY name ASC" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			$rows = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}ncrw_teams ORDER BY name ASC" );
 			return array_map( array( Team::class, 'from_row' ), $rows ?: array() );
 		}
 
@@ -216,12 +223,13 @@ class Team_Service {
 
 		$where_sql = implode( ' OR ', $where );
 		$sql       = "SELECT DISTINCT t.*
-			FROM {$wpdb->prefix}trt_teams t
-			INNER JOIN {$wpdb->prefix}trt_team_users tu ON tu.team_id = t.id
+			FROM {$wpdb->prefix}ncrw_teams t
+			INNER JOIN {$wpdb->prefix}ncrw_team_users tu ON tu.team_id = t.id
 			WHERE ({$where_sql})
 			ORDER BY t.name ASC";
 
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ) );
 		return array_map( array( Team::class, 'from_row' ), $rows ?: array() );
 	}
 
@@ -244,6 +252,7 @@ class Team_Service {
 	public function get_team_users( int $team_id ): array {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT
@@ -255,7 +264,7 @@ class Team_Service {
 					u.user_login,
 					u.user_email,
 					u.display_name
-				 FROM {$wpdb->prefix}trt_team_users tu
+				 FROM {$wpdb->prefix}ncrw_team_users tu
 				 LEFT JOIN {$wpdb->users} u ON u.ID = tu.user_id
 				 WHERE tu.team_id = %d
 				 ORDER BY COALESCE(u.display_name, tu.email) ASC",
@@ -320,10 +329,10 @@ class Team_Service {
 	/**
 	 * Add/update membership by either WP user or email.
 	 *
-	 * @param int         $team_id Team id.
-	 * @param int|null    $user_id User id (optional).
-	 * @param string      $email Member email.
-	 * @param string      $role admin|user.
+	 * @param int      $team_id Team id.
+	 * @param int|null $user_id User id (optional).
+	 * @param string   $email Member email.
+	 * @param string   $role admin|user.
 	 * @return bool
 	 */
 	public function upsert_team_member( int $team_id, ?int $user_id, string $email, string $role ): bool {
@@ -347,9 +356,10 @@ class Team_Service {
 
 		$existing_id = null;
 		if ( 0 !== $user_id ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$existing_id = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT id FROM {$wpdb->prefix}trt_team_users WHERE team_id = %d AND user_id = %d LIMIT 1",
+					"SELECT id FROM {$wpdb->prefix}ncrw_team_users WHERE team_id = %d AND user_id = %d LIMIT 1",
 					$team_id,
 					$user_id
 				)
@@ -357,9 +367,10 @@ class Team_Service {
 		}
 
 		if ( ! $existing_id && '' !== $email ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$existing_id = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT id FROM {$wpdb->prefix}trt_team_users WHERE team_id = %d AND LOWER(email) = LOWER(%s) LIMIT 1",
+					"SELECT id FROM {$wpdb->prefix}ncrw_team_users WHERE team_id = %d AND LOWER(email) = LOWER(%s) LIMIT 1",
 					$team_id,
 					$email
 				)
@@ -367,8 +378,9 @@ class Team_Service {
 		}
 
 		if ( $existing_id ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$result = $wpdb->update(
-				$wpdb->prefix . 'trt_team_users',
+				$wpdb->prefix . 'ncrw_team_users',
 				array(
 					'user_id' => $user_id,
 					'email'   => $email,
@@ -382,8 +394,9 @@ class Team_Service {
 			return false !== $result;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$result = $wpdb->insert(
-			$wpdb->prefix . 'trt_team_users',
+			$wpdb->prefix . 'ncrw_team_users',
 			array(
 				'team_id' => $team_id,
 				'user_id' => $user_id,
@@ -425,7 +438,8 @@ class Team_Service {
 			$fmt[]          = '%s';
 		}
 
-		$result = $wpdb->delete( $wpdb->prefix . 'trt_team_users', $where, $fmt );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = $wpdb->delete( $wpdb->prefix . 'ncrw_team_users', $where, $fmt );
 		return false !== $result;
 	}
 
@@ -478,9 +492,9 @@ class Team_Service {
 			return null;
 		}
 
-		$sql  = "SELECT role FROM {$wpdb->prefix}trt_team_users WHERE team_id = %d AND (" . implode( ' OR ', $where ) . ') LIMIT 1';
-		$role = $wpdb->get_var( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-
+		$sql = "SELECT role FROM {$wpdb->prefix}ncrw_team_users WHERE team_id = %d AND (" . implode( ' OR ', $where ) . ') LIMIT 1';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+		$role = $wpdb->get_var( $wpdb->prepare( $sql, $args ) );
 		return $role ? (string) $role : null;
 	}
 
@@ -566,9 +580,10 @@ class Team_Service {
 	 */
 	private function slug_exists( string $slug ): bool {
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$found = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT id FROM {$wpdb->prefix}trt_teams WHERE slug = %s LIMIT 1",
+				"SELECT id FROM {$wpdb->prefix}ncrw_teams WHERE slug = %s LIMIT 1",
 				$slug
 			)
 		);

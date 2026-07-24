@@ -1,11 +1,11 @@
-/* global trtAdmin */
+/* global ncrwAdmin */
 ( function ( $, cfg ) {
 	'use strict';
 
 	/**
 	 * Confirm delete before submitting delete forms.
 	 */
-	$( document ).on( 'submit', '.trt-delete-form', function ( e ) {
+	$( document ).on( 'submit', '.ncrw-delete-form', function ( e ) {
 		if ( ! window.confirm( cfg.i18n.confirmDelete ) ) {
 			e.preventDefault();
 		}
@@ -13,9 +13,9 @@
 
 	/**
 	 * Manual "Process Now" button via REST API.
-	 * Usage: <button class="js-trt-process-now">…</button>
+	 * Usage: <button class="js-ncrw-process-now">…</button>
 	 */
-	$( document ).on( 'click', '.js-trt-process-now', function ( e ) {
+	$( document ).on( 'click', '.js-ncrw-process-now', function ( e ) {
 		e.preventDefault();
 
 		var $btn = $( this );
@@ -44,8 +44,8 @@
 	 */
 	$( function () {
 		function syncAdminScheduleMode() {
-			var $quick = $( '#trt_quick_hours' );
-			var $datetime = $( '#trt_datetime' );
+			var $quick = $( '#ncrw_quick_hours' );
+			var $datetime = $( '#ncrw_datetime' );
 			var $datetimeRow = $datetime.closest( 'tr' );
 			if ( ! $quick.length || ! $datetime.length ) {
 				return;
@@ -62,8 +62,8 @@
 		}
 
 		function rebuildQuickHoursOptions() {
-			var $team = $( '#trt_team_id' );
-			var $quick = $( '#trt_quick_hours' );
+			var $team = $( '#ncrw_team_id' );
+			var $quick = $( '#ncrw_quick_hours' );
 			if ( ! $team.length || ! $quick.length ) {
 				return;
 			}
@@ -87,14 +87,14 @@
 			syncAdminScheduleMode();
 		}
 
-		$( document ).on( 'change', '#trt_team_id', rebuildQuickHoursOptions );
-		$( document ).on( 'change', '#trt_quick_hours', syncAdminScheduleMode );
+		$( document ).on( 'change', '#ncrw_team_id', rebuildQuickHoursOptions );
+		$( document ).on( 'change', '#ncrw_quick_hours', syncAdminScheduleMode );
 
 		rebuildQuickHoursOptions();
 		syncAdminScheduleMode();
 
 		// Prevent password managers from injecting values into the webhook field.
-		var $webhookInput = $( '#trt_slack_webhook' );
+		var $webhookInput = $( '#ncrw_slack_webhook' );
 		if ( $webhookInput.length ) {
 			$webhookInput.val( '' );
 			window.setTimeout( function () {
@@ -107,4 +107,4 @@
 		}, 4000 );
 	} );
 
-} )( jQuery, trtAdmin );
+} )( jQuery, ncrwAdmin );

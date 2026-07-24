@@ -1,26 +1,26 @@
-/* global trtFrontend */
+/* global ncrwFrontend */
 
 // ---- Global Google callback (must be outside IIFE so Google GSI can call it) ----
-window.trtOnGoogleCallback = function (response) {
+window.ncrwOnGoogleCallback = function (response) {
 	'use strict';
-	if (!window._trtPortal) {
+	if (!window._ncrwPortal) {
 		return;
 	}
-	window._trtPortal.onGoogleSignIn(response);
+	window._ncrwPortal.onGoogleSignIn(response);
 };
 
 // ---- Global Google callback for the view portal ----
-window.trtOnViewCallback = function (response) {
+window.ncrwOnViewCallback = function (response) {
 	'use strict';
-	if (!window._trtView) {
+	if (!window._ncrwView) {
 		return;
 	}
-	window._trtView.onGoogleSignIn(response);
+	window._ncrwView.onGoogleSignIn(response);
 };
 
 (function () {
 	'use strict';
-	var AUTH_STORAGE_KEY = 'trtFrontendAuth';
+	var AUTH_STORAGE_KEY = 'ncrwFrontendAuth';
 
 	var state = {
 		token: '',
@@ -48,17 +48,17 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function showNotice(message, type) {
-		var el = byId('trt-portal-notice');
+		var el = byId('ncrw-portal-notice');
 		if (!el) {
 			return;
 		}
 		el.hidden = false;
-		el.className = 'trt-frontend-notice trt-frontend-notice--' + type;
+		el.className = 'ncrw-frontend-notice ncrw-frontend-notice--' + type;
 		el.textContent = message;
 	}
 
 	function clearNotice() {
-		var el = byId('trt-portal-notice');
+		var el = byId('ncrw-portal-notice');
 		if (!el) {
 			return;
 		}
@@ -67,10 +67,10 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function setSignedInUI(isSignedIn) {
-		var gate = byId('trt-auth-gate');
-		var app = byId('trt-portal-app');
-		var emailEl = byId('trt-user-email');
-		var tokenInput = byId('trt_google_id_token');
+		var gate = byId('ncrw-auth-gate');
+		var app = byId('ncrw-portal-app');
+		var emailEl = byId('ncrw-user-email');
+		var tokenInput = byId('ncrw_google_id_token');
 
 		// Use explicit display style so theme CSS cannot override [hidden]
 		if (gate) {
@@ -150,14 +150,14 @@ window.trtOnViewCallback = function (response) {
 	function apiPost(action, data) {
 		var params = new URLSearchParams();
 		params.append('action', action);
-		params.append('trt_frontend_nonce', trtFrontend.nonce);
-		params.append('trt_google_id_token', state.token);
+		params.append('ncrw_frontend_nonce', ncrwFrontend.nonce);
+		params.append('ncrw_google_id_token', state.token);
 
 		Object.keys(data || {}).forEach(function (key) {
 			params.append(key, data[key]);
 		});
 
-		return window.fetch(trtFrontend.ajaxUrl, {
+		return window.fetch(ncrwFrontend.ajaxUrl, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -169,8 +169,8 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function renderTeamOptions() {
-		var select = byId('trt_front_team_id');
-		var quick = byId('trt_front_quick_hours');
+		var select = byId('ncrw_front_team_id');
+		var quick = byId('ncrw_front_quick_hours');
 		if (!select) {
 			return;
 		}
@@ -204,9 +204,9 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function syncScheduleInputMode() {
-		var quick = byId('trt_front_quick_hours');
-		var datetime = byId('trt_front_datetime');
-		var datetimeLabel = document.querySelector('label[for="trt_front_datetime"]');
+		var quick = byId('ncrw_front_quick_hours');
+		var datetime = byId('ncrw_front_datetime');
+		var datetimeLabel = document.querySelector('label[for="ncrw_front_datetime"]');
 		if (!quick || !datetime) {
 			return;
 		}
@@ -233,7 +233,7 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function renderList() {
-		var root = byId('trt-reminders-list');
+		var root = byId('ncrw-reminders-list');
 		if (!root) {
 			return;
 		}
@@ -241,26 +241,26 @@ window.trtOnViewCallback = function (response) {
 
 		if (!state.items.length) {
 			var empty = document.createElement('p');
-			empty.className = 'trt-empty';
-			empty.textContent = trtFrontend.i18n.emptyState;
+			empty.className = 'ncrw-empty';
+			empty.textContent = ncrwFrontend.i18n.emptyState;
 			root.appendChild(empty);
 			return;
 		}
 
 		state.items.forEach(function (item) {
 			var card = document.createElement('article');
-			card.className = 'trt-card trt-card--' + item.status;
+			card.className = 'ncrw-card ncrw-card--' + item.status;
 			card.innerHTML = [
-				'<div class="trt-card-head">',
+				'<div class="ncrw-card-head">',
 				'<h4>' + escapeHtml(item.title) + '</h4>',
-				'<span class="trt-chip trt-chip--' + escapeHtml(item.status) + '">' + escapeHtml(item.status) + '</span>',
+				'<span class="ncrw-chip ncrw-chip--' + escapeHtml(item.status) + '">' + escapeHtml(item.status) + '</span>',
 				'</div>',
-				'<p class="trt-meta">' + escapeHtml(item.display_time) + '</p>',
-				item.comments ? '<p class="trt-comments">' + escapeHtml(item.comments) + '</p>' : '',
-				item.task_link ? '<p class="trt-card-link"><a href="' + escapeAttr(item.task_link) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.task_link) + '</a></p>' : '',
-				item.added_by ? '<p class="trt-added-by">Added by ' + escapeHtml(item.added_by) + '</p>' : '',
-				'<div class="trt-card-actions">',
-				'<button type="button" class="button" data-edit-id="' + item.id + '">' + trtFrontend.i18n.edit + '</button>',
+				'<p class="ncrw-meta">' + escapeHtml(item.display_time) + '</p>',
+				item.comments ? '<p class="ncrw-comments">' + escapeHtml(item.comments) + '</p>' : '',
+				item.task_link ? '<p class="ncrw-card-link"><a href="' + escapeAttr(item.task_link) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.task_link) + '</a></p>' : '',
+				item.added_by ? '<p class="ncrw-added-by">Added by ' + escapeHtml(item.added_by) + '</p>' : '',
+				'<div class="ncrw-card-actions">',
+				'<button type="button" class="button" data-edit-id="' + item.id + '">' + ncrwFrontend.i18n.edit + '</button>',
 				'</div>'
 			].join('');
 			root.appendChild(card);
@@ -282,61 +282,61 @@ window.trtOnViewCallback = function (response) {
 			return;
 		}
 
-		byId('trt_front_id').value = String(item.id);
-		byId('trt_front_team_id').value = String(item.team_id || state.selectedTeamId || 0);
-		byId('trt_front_title').value = item.title || '';
-		byId('trt_front_quick_hours').value = '0';
-		byId('trt_front_datetime').value = item.datetime_local || '';
-		byId('trt_front_link').value = item.task_link || '';
-		byId('trt_front_comments').value = item.comments || '';
-		byId('trt-form-title').textContent = trtFrontend.i18n.editTitle;
-		byId('trt-front-cancel').hidden = false;
-		window.scrollTo({ top: byId('trt-reminder-form').offsetTop - 80, behavior: 'smooth' });
+		byId('ncrw_front_id').value = String(item.id);
+		byId('ncrw_front_team_id').value = String(item.team_id || state.selectedTeamId || 0);
+		byId('ncrw_front_title').value = item.title || '';
+		byId('ncrw_front_quick_hours').value = '0';
+		byId('ncrw_front_datetime').value = item.datetime_local || '';
+		byId('ncrw_front_link').value = item.task_link || '';
+		byId('ncrw_front_comments').value = item.comments || '';
+		byId('ncrw-form-title').textContent = ncrwFrontend.i18n.editTitle;
+		byId('ncrw-front-cancel').hidden = false;
+		window.scrollTo({ top: byId('ncrw-reminder-form').offsetTop - 80, behavior: 'smooth' });
 	}
 
 	function resetForm() {
-		byId('trt_front_id').value = '0';
-		byId('trt-reminder-form').reset();
-		if (byId('trt_front_team_id') && state.selectedTeamId) {
-			byId('trt_front_team_id').value = String(state.selectedTeamId);
+		byId('ncrw_front_id').value = '0';
+		byId('ncrw-reminder-form').reset();
+		if (byId('ncrw_front_team_id') && state.selectedTeamId) {
+			byId('ncrw_front_team_id').value = String(state.selectedTeamId);
 		}
-		if (byId('trt_front_quick_hours')) {
-			byId('trt_front_quick_hours').value = '0';
+		if (byId('ncrw_front_quick_hours')) {
+			byId('ncrw_front_quick_hours').value = '0';
 		}
 		syncScheduleInputMode();
-		byId('trt_google_id_token').value = state.token;
-		byId('trt-form-title').textContent = trtFrontend.i18n.createTitle;
-		byId('trt-front-cancel').hidden = true;
+		byId('ncrw_google_id_token').value = state.token;
+		byId('ncrw-form-title').textContent = ncrwFrontend.i18n.createTitle;
+		byId('ncrw-front-cancel').hidden = true;
 	}
 
 	function setMainActiveTab(status) {
 		state.listStatus = status;
-		var tabs = document.querySelectorAll('#trt-main-status-tabs .trt-tab');
+		var tabs = document.querySelectorAll('#ncrw-main-status-tabs .ncrw-tab');
 		tabs.forEach(function (tab) {
-			tab.classList.toggle('trt-tab--active', tab.getAttribute('data-status') === status);
+			tab.classList.toggle('ncrw-tab--active', tab.getAttribute('data-status') === status);
 		});
 	}
 
 	function syncMainOrderUI() {
-		var btn = byId('trt-main-order-toggle');
+		var btn = byId('ncrw-main-order-toggle');
 		if (!btn) {
 			return;
 		}
 		btn.setAttribute('data-order', state.listOrder);
-		var icon = btn.querySelector('.trt-order-icon');
-		var label = btn.querySelector('.trt-order-label');
+		var icon = btn.querySelector('.ncrw-order-icon');
+		var label = btn.querySelector('.ncrw-order-label');
 		if (icon) { icon.textContent = 'ASC' === state.listOrder ? '↑' : '↓'; }
 		if (label) { label.textContent = state.listOrder; }
 	}
 
 	function loadReminders() {
 		var payload = {
-			trt_team_id: state.selectedTeamId,
-			trt_orderby: state.listOrderby,
-			trt_order: state.listOrder,
-			trt_status: state.listStatus
+			ncrw_team_id: state.selectedTeamId,
+			ncrw_orderby: state.listOrderby,
+			ncrw_order: state.listOrder,
+			ncrw_status: state.listStatus
 		};
-		return apiPost('trt_frontend_list_reminders', payload).then(function (res) {
+		return apiPost('ncrw_frontend_list_reminders', payload).then(function (res) {
 			if (!res || !res.success) {
 				throw new Error((res && res.data && res.data.message) || 'Failed to load reminders.');
 			}
@@ -350,15 +350,15 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function bindEvents() {
-		var form = byId('trt-reminder-form');
-		var cancel = byId('trt-front-cancel');
-		var refresh = byId('trt-refresh-list');
-		var signOut = byId('trt-sign-out');
-		var teamSelect = byId('trt_front_team_id');
-		var quickSelect = byId('trt_front_quick_hours');
+		var form = byId('ncrw-reminder-form');
+		var cancel = byId('ncrw-front-cancel');
+		var refresh = byId('ncrw-refresh-list');
+		var signOut = byId('ncrw-sign-out');
+		var teamSelect = byId('ncrw_front_team_id');
+		var quickSelect = byId('ncrw_front_quick_hours');
 
 		// --- filter tabs ---
-		var statusTabs = document.querySelectorAll('#trt-main-status-tabs .trt-tab');
+		var statusTabs = document.querySelectorAll('#ncrw-main-status-tabs .ncrw-tab');
 		statusTabs.forEach(function (tab) {
 			tab.addEventListener('click', function () {
 				setMainActiveTab(tab.getAttribute('data-status') || '');
@@ -370,7 +370,7 @@ window.trtOnViewCallback = function (response) {
 		});
 
 		// --- sort-by select ---
-		var orderbySelect = byId('trt-main-orderby');
+		var orderbySelect = byId('ncrw-main-orderby');
 		if (orderbySelect) {
 			orderbySelect.addEventListener('change', function () {
 				state.listOrderby = orderbySelect.value || 'remind_at';
@@ -382,7 +382,7 @@ window.trtOnViewCallback = function (response) {
 		}
 
 		// --- sort-order toggle ---
-		var orderBtn = byId('trt-main-order-toggle');
+		var orderBtn = byId('ncrw-main-order-toggle');
 		if (orderBtn) {
 			orderBtn.addEventListener('click', function () {
 				state.listOrder = 'ASC' === state.listOrder ? 'DESC' : 'ASC';
@@ -400,16 +400,16 @@ window.trtOnViewCallback = function (response) {
 				clearNotice();
 
 				var payload = {
-					id: byId('trt_front_id').value,
-					trt_team_id: byId('trt_front_team_id').value,
-					trt_quick_hours: byId('trt_front_quick_hours').value,
-					trt_title: byId('trt_front_title').value,
-					trt_reminder_datetime: byId('trt_front_datetime').value,
-					trt_link: byId('trt_front_link').value,
-					trt_comments: byId('trt_front_comments').value
+					id: byId('ncrw_front_id').value,
+					ncrw_team_id: byId('ncrw_front_team_id').value,
+					ncrw_quick_hours: byId('ncrw_front_quick_hours').value,
+					ncrw_title: byId('ncrw_front_title').value,
+					ncrw_reminder_datetime: byId('ncrw_front_datetime').value,
+					ncrw_link: byId('ncrw_front_link').value,
+					ncrw_comments: byId('ncrw_front_comments').value
 				};
 
-				apiPost('trt_frontend_save_reminder', payload)
+				apiPost('ncrw_frontend_save_reminder', payload)
 					.then(function (res) {
 						if (!res || !res.success) {
 							throw new Error((res && res.data && res.data.message) || 'Save failed.');
@@ -420,11 +420,11 @@ window.trtOnViewCallback = function (response) {
 						}
 
 						if (res.data.mode === 'updated') {
-							showNotice(trtFrontend.i18n.updatedMessage, 'success');
+							showNotice(ncrwFrontend.i18n.updatedMessage, 'success');
 						} else if (createdId > 0) {
-							showNotice(trtFrontend.i18n.createdMessage + ' #' + createdId, 'success');
+							showNotice(ncrwFrontend.i18n.createdMessage + ' #' + createdId, 'success');
 						} else {
-							showNotice(trtFrontend.i18n.createdMessage, 'success');
+							showNotice(ncrwFrontend.i18n.createdMessage, 'success');
 						}
 						resetForm();
 						return loadReminders();
@@ -494,12 +494,12 @@ window.trtOnViewCallback = function (response) {
 		return escapeHtml(str);
 	}
 
-	// Expose sign-in handler so window.trtOnGoogleCallback can call it.
-	window._trtPortal = {
+	// Expose sign-in handler so window.ncrwOnGoogleCallback can call it.
+	window._ncrwPortal = {
 		onGoogleSignIn: function (response) {
 			var payload = decodeJwtPayload(response.credential || '');
 			if (!payload || !payload.email) {
-				showNotice(trtFrontend.i18n.signInError, 'error');
+				showNotice(ncrwFrontend.i18n.signInError, 'error');
 				return;
 			}
 			state.token = response.credential || '';
@@ -512,13 +512,13 @@ window.trtOnViewCallback = function (response) {
 				clearPersistedAuthState();
 				state.token = '';
 				setSignedInUI(false);
-				showNotice(err.message || trtFrontend.i18n.signInError, 'error');
+				showNotice(err.message || ncrwFrontend.i18n.signInError, 'error');
 			});
 		}
 	};
 
 	document.addEventListener('DOMContentLoaded', function () {
-		if (!document.querySelector('[data-trt-portal="1"]')) {
+		if (!document.querySelector('[data-ncrw-portal="1"]')) {
 			return;
 		}
 		bindEvents();
@@ -534,7 +534,7 @@ window.trtOnViewCallback = function (response) {
 				state.selectedTeamId = 0;
 				state.items = [];
 				setSignedInUI(false);
-				showNotice(trtFrontend.i18n.sessionExpired || trtFrontend.i18n.signInError, 'error');
+				showNotice(ncrwFrontend.i18n.sessionExpired || ncrwFrontend.i18n.signInError, 'error');
 			});
 			return;
 		}
@@ -548,12 +548,12 @@ window.trtOnViewCallback = function (response) {
 // View Portal — Upcoming Reminders (read-only, sorted list)
 // =====================================================================
 
-/* global trtView */
+/* global ncrwView */
 
 (function () {
 	'use strict';
 
-	var VIEW_AUTH_KEY = 'trtViewAuth';
+	var VIEW_AUTH_KEY = 'ncrwViewAuth';
 
 	var state = {
 		token: '',
@@ -581,12 +581,12 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function showViewNotice(message, type) {
-		var el = vById('trt-view-notice');
+		var el = vById('ncrw-view-notice');
 		if (!el) {
 			return;
 		}
 		el.hidden = false;
-		el.className = 'trt-frontend-notice trt-frontend-notice--' + type;
+		el.className = 'ncrw-frontend-notice ncrw-frontend-notice--' + type;
 		el.textContent = message;
 		if ('success' === type) {
 			setTimeout(function () {
@@ -599,7 +599,7 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function clearViewNotice() {
-		var el = vById('trt-view-notice');
+		var el = vById('ncrw-view-notice');
 		if (!el) {
 			return;
 		}
@@ -608,9 +608,9 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function setViewSignedInUI(isSignedIn) {
-		var gate = vById('trt-view-auth-gate');
-		var app = vById('trt-view-app');
-		var emailEl = vById('trt-view-user-email');
+		var gate = vById('ncrw-view-auth-gate');
+		var app = vById('ncrw-view-app');
+		var emailEl = vById('ncrw-view-user-email');
 		if (gate) {
 			gate.style.display = isSignedIn ? 'none' : '';
 		}
@@ -675,13 +675,13 @@ window.trtOnViewCallback = function (response) {
 
 	function viewApiPost(data) {
 		var params = new URLSearchParams();
-		params.append('action', 'trt_frontend_view_reminders');
-		params.append('trt_view_nonce', trtView.nonce);
-		params.append('trt_google_id_token', state.token);
+		params.append('action', 'ncrw_frontend_view_reminders');
+		params.append('ncrw_view_nonce', ncrwView.nonce);
+		params.append('ncrw_google_id_token', state.token);
 		Object.keys(data || {}).forEach(function (key) {
 			params.append(key, data[key]);
 		});
-		return window.fetch(trtView.ajaxUrl, {
+		return window.fetch(ncrwView.ajaxUrl, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
 			body: params.toString()
@@ -691,7 +691,7 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function renderViewTeamOptions() {
-		var select = vById('trt-view-team');
+		var select = vById('ncrw-view-team');
 		if (!select) {
 			return;
 		}
@@ -726,8 +726,8 @@ window.trtOnViewCallback = function (response) {
 	}
 
 	function renderViewList() {
-		var root = vById('trt-view-list');
-		var countEl = vById('trt-view-count');
+		var root = vById('ncrw-view-list');
+		var countEl = vById('ncrw-view-count');
 		if (!root) {
 			return;
 		}
@@ -736,14 +736,14 @@ window.trtOnViewCallback = function (response) {
 		var count = state.items.length;
 		if (countEl) {
 			countEl.hidden = false;
-			var label = 1 === count ? trtView.i18n.countSingular : trtView.i18n.countPlural;
+			var label = 1 === count ? ncrwView.i18n.countSingular : ncrwView.i18n.countPlural;
 			countEl.textContent = count + ' ' + label;
 		}
 
 		if (!count) {
 			var empty = document.createElement('p');
-			empty.className = 'trt-empty';
-			empty.textContent = trtView.i18n.emptyState;
+			empty.className = 'ncrw-empty';
+			empty.textContent = ncrwView.i18n.emptyState;
 			root.appendChild(empty);
 			return;
 		}
@@ -753,31 +753,31 @@ window.trtOnViewCallback = function (response) {
 		state.items.forEach(function (item) {
 			var isUpcoming = item.remind_at_ts && item.remind_at_ts > nowTs && 'pending' === item.status;
 			var card = document.createElement('article');
-			card.className = 'trt-card trt-card--' + escapeHtml(item.status) + (isUpcoming ? ' trt-card--upcoming' : '');
+			card.className = 'ncrw-card ncrw-card--' + escapeHtml(item.status) + (isUpcoming ? ' ncrw-card--upcoming' : '');
 
 			var linkHtml = item.task_link
-				? '<p class="trt-card-link" style="margin:8px 0 0">' +
+				? '<p class="ncrw-card-link" style="margin:8px 0 0">' +
 				'<a href="' + escapeAttr(item.task_link) + '" target="_blank" rel="noopener noreferrer">' +
 				'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:3px" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
 				escapeHtml(item.task_link) + '</a></p>'
 				: '';;
 
 			card.innerHTML =
-				'<div class="trt-card-head">' +
+				'<div class="ncrw-card-head">' +
 				'<h4>' + escapeHtml(item.title) + '</h4>' +
-				'<span class="trt-chip trt-chip--' + escapeHtml(item.status) + '">' + escapeHtml(statusLabel(item.status)) + '</span>' +
+				'<span class="ncrw-chip ncrw-chip--' + escapeHtml(item.status) + '">' + escapeHtml(statusLabel(item.status)) + '</span>' +
 				'</div>' +
-				'<div class="trt-meta-row">' +
-				'<span class="trt-meta-item">' +
+				'<div class="ncrw-meta-row">' +
+				'<span class="ncrw-meta-item">' +
 				'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
 				'<span><strong>Trigger:</strong> ' + escapeHtml(item.display_time) + '</span>' +
 				'</span>' +
-				'<span class="trt-meta-item">' +
+				'<span class="ncrw-meta-item">' +
 				'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
 				'<span><strong>Added:</strong> ' + escapeHtml(item.created_display) + '</span>' +
 				'</span>' +
 				'</div>' +
-				(item.comments ? '<p class="trt-comments">' + escapeHtml(item.comments) + '</p>' : '') +
+				(item.comments ? '<p class="ncrw-comments">' + escapeHtml(item.comments) + '</p>' : '') +
 				linkHtml;
 
 			root.appendChild(card);
@@ -786,19 +786,19 @@ window.trtOnViewCallback = function (response) {
 
 	function loadViewReminders() {
 		return viewApiPost({
-			trt_team_id: state.selectedTeamId,
-			trt_orderby: state.orderby,
-			trt_order: state.order,
-			trt_status: state.status
+			ncrw_team_id: state.selectedTeamId,
+			ncrw_orderby: state.orderby,
+			ncrw_order: state.order,
+			ncrw_status: state.status
 		}).then(function (res) {
 			if (!res || !res.success) {
-				throw new Error((res && res.data && res.data.message) || trtView.i18n.loadError);
+				throw new Error((res && res.data && res.data.message) || ncrwView.i18n.loadError);
 			}
 			state.email = res.data.email || state.email;
 			state.teams = res.data.teams || state.teams;
 			state.selectedTeamId = parseInt(res.data.selected_team_id || state.selectedTeamId || 0, 10);
 			renderViewTeamOptions();
-			var emailEl = vById('trt-view-user-email');
+			var emailEl = vById('ncrw-view-user-email');
 			if (emailEl) {
 				emailEl.textContent = state.email;
 			}
@@ -809,87 +809,87 @@ window.trtOnViewCallback = function (response) {
 
 	function setActiveTab(status) {
 		state.status = status;
-		var tabs = document.querySelectorAll('#trt-view-status-tabs .trt-tab');
+		var tabs = document.querySelectorAll('#ncrw-view-status-tabs .ncrw-tab');
 		tabs.forEach(function (tab) {
-			tab.classList.toggle('trt-tab--active', tab.getAttribute('data-status') === status);
+			tab.classList.toggle('ncrw-tab--active', tab.getAttribute('data-status') === status);
 		});
 	}
 
 	function syncOrderUI() {
-		var btn = vById('trt-view-order-toggle');
+		var btn = vById('ncrw-view-order-toggle');
 		if (!btn) {
 			return;
 		}
 		btn.setAttribute('data-order', state.order);
-		var icon = btn.querySelector('.trt-order-icon');
-		var label = btn.querySelector('.trt-order-label');
+		var icon = btn.querySelector('.ncrw-order-icon');
+		var label = btn.querySelector('.ncrw-order-label');
 		if (icon) { icon.textContent = 'ASC' === state.order ? '↑' : '↓'; }
 		if (label) { label.textContent = state.order; }
 	}
 
 	function bindViewEvents() {
 		// Status tabs
-		var tabs = document.querySelectorAll('#trt-view-status-tabs .trt-tab');
+		var tabs = document.querySelectorAll('#ncrw-view-status-tabs .ncrw-tab');
 		tabs.forEach(function (tab) {
 			tab.addEventListener('click', function () {
 				setActiveTab(tab.getAttribute('data-status') || '');
 				clearViewNotice();
 				loadViewReminders().catch(function (err) {
-					showViewNotice(err.message || trtView.i18n.loadError, 'error');
+					showViewNotice(err.message || ncrwView.i18n.loadError, 'error');
 				});
 			});
 		});
 
 		// Sort-by select
-		var orderbySelect = vById('trt-view-orderby');
+		var orderbySelect = vById('ncrw-view-orderby');
 		if (orderbySelect) {
 			orderbySelect.addEventListener('change', function () {
 				state.orderby = orderbySelect.value || 'remind_at';
 				clearViewNotice();
 				loadViewReminders().catch(function (err) {
-					showViewNotice(err.message || trtView.i18n.loadError, 'error');
+					showViewNotice(err.message || ncrwView.i18n.loadError, 'error');
 				});
 			});
 		}
 
 		// Sort-order toggle
-		var orderBtn = vById('trt-view-order-toggle');
+		var orderBtn = vById('ncrw-view-order-toggle');
 		if (orderBtn) {
 			orderBtn.addEventListener('click', function () {
 				state.order = 'ASC' === state.order ? 'DESC' : 'ASC';
 				syncOrderUI();
 				clearViewNotice();
 				loadViewReminders().catch(function (err) {
-					showViewNotice(err.message || trtView.i18n.loadError, 'error');
+					showViewNotice(err.message || ncrwView.i18n.loadError, 'error');
 				});
 			});
 		}
 
 		// Team select
-		var teamSelect = vById('trt-view-team');
+		var teamSelect = vById('ncrw-view-team');
 		if (teamSelect) {
 			teamSelect.addEventListener('change', function () {
 				state.selectedTeamId = parseInt(teamSelect.value || '0', 10);
 				clearViewNotice();
 				loadViewReminders().catch(function (err) {
-					showViewNotice(err.message || trtView.i18n.loadError, 'error');
+					showViewNotice(err.message || ncrwView.i18n.loadError, 'error');
 				});
 			});
 		}
 
 		// Refresh
-		var refreshBtn = vById('trt-view-refresh');
+		var refreshBtn = vById('ncrw-view-refresh');
 		if (refreshBtn) {
 			refreshBtn.addEventListener('click', function () {
 				clearViewNotice();
 				loadViewReminders().catch(function (err) {
-					showViewNotice(err.message || trtView.i18n.loadError, 'error');
+					showViewNotice(err.message || ncrwView.i18n.loadError, 'error');
 				});
 			});
 		}
 
 		// Sign out
-		var signOut = vById('trt-view-sign-out');
+		var signOut = vById('ncrw-view-sign-out');
 		if (signOut) {
 			signOut.addEventListener('click', function () {
 				state.token = '';
@@ -906,11 +906,11 @@ window.trtOnViewCallback = function (response) {
 		}
 	}
 
-	window._trtView = {
+	window._ncrwView = {
 		onGoogleSignIn: function (response) {
 			var payload = decodeJwtPayload(response.credential || '');
 			if (!payload || !payload.email) {
-				showViewNotice(trtView.i18n.signInError, 'error');
+				showViewNotice(ncrwView.i18n.signInError, 'error');
 				return;
 			}
 			state.token = response.credential || '';
@@ -922,13 +922,13 @@ window.trtOnViewCallback = function (response) {
 				clearPersistedViewAuth();
 				state.token = '';
 				setViewSignedInUI(false);
-				showViewNotice(err.message || trtView.i18n.signInError, 'error');
+				showViewNotice(err.message || ncrwView.i18n.signInError, 'error');
 			});
 		}
 	};
 
 	document.addEventListener('DOMContentLoaded', function () {
-		if (!document.querySelector('[data-trt-view="1"]')) {
+		if (!document.querySelector('[data-ncrw-view="1"]')) {
 			return;
 		}
 
@@ -944,7 +944,7 @@ window.trtOnViewCallback = function (response) {
 				state.selectedTeamId = 0;
 				state.items = [];
 				setViewSignedInUI(false);
-				showViewNotice(trtView.i18n.sessionExpired || trtView.i18n.signInError, 'error');
+				showViewNotice(ncrwView.i18n.sessionExpired || ncrwView.i18n.signInError, 'error');
 			});
 			return;
 		}

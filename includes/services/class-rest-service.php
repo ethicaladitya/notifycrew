@@ -2,18 +2,18 @@
 /**
  * REST API endpoint - manual processing + team-scoped reminders.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Services;
+namespace Aditya\NotifyCrew\Services;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Aditya\ReminderTool\Models\Reminder;
-use Aditya\ReminderTool\Models\Team;
+use Aditya\NotifyCrew\Models\Reminder;
+use Aditya\NotifyCrew\Models\Team;
 
 /**
  * Class Rest_Service
@@ -21,10 +21,10 @@ use Aditya\ReminderTool\Models\Team;
 class Rest_Service {
 
 	/** REST namespace. */
-	const NAMESPACE = 'trt/v1';
+	const NAMESPACE = 'ncrw/v1';
 
 	/** Plugin settings option. */
-	const SETTINGS_OPTION = 'trt_options';
+	const SETTINGS_OPTION = 'ncrw_options';
 
 	/**
 	 * Singleton instance.
@@ -72,10 +72,26 @@ class Rest_Service {
 				'callback'            => array( $this, 'handle_list_reminders' ),
 				'permission_callback' => array( $this, 'read_permission' ),
 				'args'                => array(
-					'team_id'  => array( 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0 ),
-					'status'   => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_key', 'default' => '' ),
-					'per_page' => array( 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 20 ),
-					'page'     => array( 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 1 ),
+					'team_id'  => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'default'           => 0,
+					),
+					'status'   => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_key',
+						'default'           => '',
+					),
+					'per_page' => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'default'           => 20,
+					),
+					'page'     => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'default'           => 1,
+					),
 				),
 			)
 		);
@@ -88,7 +104,11 @@ class Rest_Service {
 				'callback'            => array( $this, 'handle_retry' ),
 				'permission_callback' => array( $this, 'read_permission' ),
 				'args'                => array(
-					'id' => array( 'type' => 'integer', 'sanitize_callback' => 'absint', 'required' => true ),
+					'id' => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'required'          => true,
+					),
 				),
 			)
 		);
@@ -101,8 +121,16 @@ class Rest_Service {
 				'callback'            => array( $this, 'handle_portal_bootstrap' ),
 				'permission_callback' => '__return_true',
 				'args'                => array(
-					'id_token' => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'required' => true ),
-					'team_id'  => array( 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0 ),
+					'id_token' => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'required'          => true,
+					),
+					'team_id'  => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'default'           => 0,
+					),
 				),
 			)
 		);
@@ -115,14 +143,46 @@ class Rest_Service {
 				'callback'            => array( $this, 'handle_portal_save_reminder' ),
 				'permission_callback' => '__return_true',
 				'args'                => array(
-					'id_token'         => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'required' => true ),
-					'id'               => array( 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0 ),
-					'team_id'          => array( 'type' => 'integer', 'sanitize_callback' => 'absint', 'required' => true ),
-					'title'            => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'required' => true ),
-					'reminder_datetime'=> array( 'type' => 'string', 'sanitize_callback' => 'sanitize_text_field', 'required' => false ),
-					'quick_hours'      => array( 'type' => 'integer', 'sanitize_callback' => 'absint', 'default' => 0 ),
-					'link'             => array( 'type' => 'string', 'sanitize_callback' => 'esc_url_raw', 'default' => '' ),
-					'comments'         => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_textarea_field', 'default' => '' ),
+					'id_token'          => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'required'          => true,
+					),
+					'id'                => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'default'           => 0,
+					),
+					'team_id'           => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'required'          => true,
+					),
+					'title'             => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'required'          => true,
+					),
+					'reminder_datetime' => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'required'          => false,
+					),
+					'quick_hours'       => array(
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'default'           => 0,
+					),
+					'link'              => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'esc_url_raw',
+						'default'           => '',
+					),
+					'comments'          => array(
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_textarea_field',
+						'default'           => '',
+					),
 				),
 			)
 		);
@@ -135,7 +195,7 @@ class Rest_Service {
 	 */
 	public function admin_permission() {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			return new \WP_Error( 'rest_forbidden', __( 'You do not have permission to perform this action.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'rest_forbidden', __( 'You do not have permission to perform this action.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 		return true;
 	}
@@ -147,7 +207,7 @@ class Rest_Service {
 	 */
 	public function read_permission() {
 		if ( ! is_user_logged_in() ) {
-			return new \WP_Error( 'rest_forbidden', __( 'You must be logged in.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'rest_forbidden', __( 'You must be logged in.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 		return true;
 	}
@@ -160,7 +220,13 @@ class Rest_Service {
 	 */
 	public function handle_process( \WP_REST_Request $request ): \WP_REST_Response {
 		Cron_Service::get_instance()->process();
-		return new \WP_REST_Response( array( 'success' => true, 'message' => __( 'Processing complete.', 'reminder-manager' ) ), 200 );
+		return new \WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => __( 'Processing complete.', 'notifycrew' ),
+			),
+			200
+		);
 	}
 
 	/**
@@ -185,7 +251,13 @@ class Rest_Service {
 			$items[] = (array) $reminder;
 		}
 
-		return new \WP_REST_Response( array( 'items' => $items, 'total' => $total ), 200 );
+		return new \WP_REST_Response(
+			array(
+				'items' => $items,
+				'total' => $total,
+			),
+			200
+		);
 	}
 
 	/**
@@ -199,15 +271,15 @@ class Rest_Service {
 		$service  = Reminder_Service::get_instance();
 		$reminder = $service->get( $id );
 		if ( ! $reminder ) {
-			return new \WP_Error( 'not_found', __( 'Reminder not found.', 'reminder-manager' ), array( 'status' => 404 ) );
+			return new \WP_Error( 'not_found', __( 'Reminder not found.', 'notifycrew' ), array( 'status' => 404 ) );
 		}
 		if ( ! Team_Service::get_instance()->user_can_admin_team( (int) $reminder->team_id ) ) {
-			return new \WP_Error( 'rest_forbidden', __( 'You do not have permission to retry this reminder.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'rest_forbidden', __( 'You do not have permission to retry this reminder.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 
 		$queued = $service->queue_retry( $id );
 		if ( ! $queued ) {
-			return new \WP_Error( 'retry_failed', __( 'Could not queue retry for this reminder.', 'reminder-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'retry_failed', __( 'Could not queue retry for this reminder.', 'notifycrew' ), array( 'status' => 400 ) );
 		}
 
 		return new \WP_REST_Response( array( 'success' => true ), 200 );
@@ -221,11 +293,11 @@ class Rest_Service {
 	 */
 	public function handle_portal_bootstrap( \WP_REST_Request $request ) {
 		if ( ! $this->is_frontend_portal_enabled() ) {
-			return new \WP_Error( 'portal_disabled', __( 'Frontend reminder submission is disabled.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'portal_disabled', __( 'Frontend reminder submission is disabled.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! $this->has_valid_portal_api_key( $request ) ) {
-			return new \WP_Error( 'invalid_api_key', __( 'Invalid API key.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'invalid_api_key', __( 'Invalid API key.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 
 		$identity = $this->verify_portal_identity( (string) $request->get_param( 'id_token' ) );
@@ -240,7 +312,7 @@ class Rest_Service {
 		$teams        = $team_service->get_teams_for_identity( $user_id, $email );
 
 		if ( empty( $teams ) ) {
-			return new \WP_Error( 'no_teams', __( 'No teams are assigned to your account.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'no_teams', __( 'No teams are assigned to your account.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 
 		$requested_team_id = (int) $request->get_param( 'team_id' );
@@ -279,11 +351,11 @@ class Rest_Service {
 	 */
 	public function handle_portal_save_reminder( \WP_REST_Request $request ) {
 		if ( ! $this->is_frontend_portal_enabled() ) {
-			return new \WP_Error( 'portal_disabled', __( 'Frontend reminder submission is disabled.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'portal_disabled', __( 'Frontend reminder submission is disabled.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! $this->has_valid_portal_api_key( $request ) ) {
-			return new \WP_Error( 'invalid_api_key', __( 'Invalid API key.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'invalid_api_key', __( 'Invalid API key.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 
 		$identity = $this->verify_portal_identity( (string) $request->get_param( 'id_token' ) );
@@ -298,41 +370,41 @@ class Rest_Service {
 		$team_id      = (int) $request->get_param( 'team_id' );
 
 		if ( ! $team_service->user_can_access_team( $team_id, $user_id, $email ) ) {
-			return new \WP_Error( 'forbidden_team', __( 'You can only create reminders in your teams.', 'reminder-manager' ), array( 'status' => 403 ) );
+			return new \WP_Error( 'forbidden_team', __( 'You can only create reminders in your teams.', 'notifycrew' ), array( 'status' => 403 ) );
 		}
 
 		$quick_hours = absint( $request->get_param( 'quick_hours' ) );
 		$remind_at   = $this->normalize_datetime_input( (string) $request->get_param( 'reminder_datetime' ) );
 		if ( $quick_hours > 0 ) {
 			if ( ! $team_service->is_quick_hour_allowed( $team_id, $quick_hours ) ) {
-				return new \WP_Error( 'invalid_quick_hours', __( 'Invalid quick schedule hour value.', 'reminder-manager' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'invalid_quick_hours', __( 'Invalid quick schedule hour value.', 'notifycrew' ), array( 'status' => 400 ) );
 			}
 			$remind_at = gmdate( 'Y-m-d H:i:s', time() + ( $quick_hours * HOUR_IN_SECONDS ) );
 		}
 
 		if ( '' === sanitize_text_field( (string) $request->get_param( 'title' ) ) ) {
-			return new \WP_Error( 'invalid_title', __( 'Title is required.', 'reminder-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_title', __( 'Title is required.', 'notifycrew' ), array( 'status' => 400 ) );
 		}
 
 		if ( '' === $remind_at || ! strtotime( $remind_at . ' UTC' ) ) {
-			return new \WP_Error( 'invalid_datetime', __( 'A valid date and time is required.', 'reminder-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_datetime', __( 'A valid date and time is required.', 'notifycrew' ), array( 'status' => 400 ) );
 		}
 
 		$link = (string) $request->get_param( 'link' );
 		if ( '' !== $link && ! filter_var( $link, FILTER_VALIDATE_URL ) ) {
-			return new \WP_Error( 'invalid_link', __( 'Task link must be a valid URL.', 'reminder-manager' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'invalid_link', __( 'Task link must be a valid URL.', 'notifycrew' ), array( 'status' => 400 ) );
 		}
 
 		$data = array(
-			'team_id'       => $team_id,
-			'title'         => (string) $request->get_param( 'title' ),
-			'remind_at'     => $remind_at,
-			'task_link'     => $link,
-			'comments'      => (string) $request->get_param( 'comments' ),
-			'user_id'       => $user_id,
-			'member_email'  => $email,
-			'_actor_user_id'=> $user_id,
-			'_actor_email'  => $email,
+			'team_id'        => $team_id,
+			'title'          => (string) $request->get_param( 'title' ),
+			'remind_at'      => $remind_at,
+			'task_link'      => $link,
+			'comments'       => (string) $request->get_param( 'comments' ),
+			'user_id'        => $user_id,
+			'member_email'   => $email,
+			'_actor_user_id' => $user_id,
+			'_actor_email'   => $email,
 		);
 
 		$service = Reminder_Service::get_instance();
@@ -341,16 +413,16 @@ class Rest_Service {
 		if ( $id > 0 ) {
 			$existing = $service->get( $id );
 			if ( ! $existing || ! $team_service->user_can_access_team( (int) $existing->team_id, $user_id, $email ) ) {
-				return new \WP_Error( 'forbidden_edit', __( 'You can only edit reminders from your teams.', 'reminder-manager' ), array( 'status' => 403 ) );
+				return new \WP_Error( 'forbidden_edit', __( 'You can only edit reminders from your teams.', 'notifycrew' ), array( 'status' => 403 ) );
 			}
 
 			if ( 'sent' === $existing->status || 'completed' === $existing->status ) {
-				return new \WP_Error( 'immutable_status', __( 'Sent/completed reminders cannot be edited.', 'reminder-manager' ), array( 'status' => 400 ) );
+				return new \WP_Error( 'immutable_status', __( 'Sent/completed reminders cannot be edited.', 'notifycrew' ), array( 'status' => 400 ) );
 			}
 
 			$updated = $service->update( $id, $data );
 			if ( ! $updated ) {
-				return new \WP_Error( 'update_failed', __( 'Could not update reminder.', 'reminder-manager' ), array( 'status' => 500 ) );
+				return new \WP_Error( 'update_failed', __( 'Could not update reminder.', 'notifycrew' ), array( 'status' => 500 ) );
 			}
 
 			$reminder = $service->get( $id );
@@ -365,7 +437,7 @@ class Rest_Service {
 
 		$new_id = $service->create( $data );
 		if ( false === $new_id ) {
-			return new \WP_Error( 'create_failed', __( 'Could not create reminder.', 'reminder-manager' ), array( 'status' => 500 ) );
+			return new \WP_Error( 'create_failed', __( 'Could not create reminder.', 'notifycrew' ), array( 'status' => 500 ) );
 		}
 
 		$reminder = $service->get( (int) $new_id );
@@ -402,11 +474,7 @@ class Rest_Service {
 		if ( '' === $stored ) {
 			return false;
 		}
-
-		$sent = (string) $request->get_header( 'x-trt-api-key' );
-		if ( '' === $sent ) {
-			$sent = (string) $request->get_header( 'X-TRT-API-Key' );
-		}
+		$sent = (string) $request->get_header( 'x-ncrw-api-key' );
 
 		return '' !== $sent && hash_equals( $stored, $sent );
 	}
@@ -427,7 +495,7 @@ class Rest_Service {
 		}
 
 		if ( ! $this->is_email_domain_allowed( (string) $email ) ) {
-			return new \WP_Error( 'domain_not_allowed', __( 'Your email domain is not allowed.', 'reminder-manager' ) );
+			return new \WP_Error( 'domain_not_allowed', __( 'Your email domain is not allowed.', 'notifycrew' ) );
 		}
 
 		$user    = get_user_by( 'email', (string) $email );
@@ -448,12 +516,15 @@ class Rest_Service {
 	 */
 	private function verify_google_token( string $id_token, string $client_id ) {
 		if ( '' === $id_token || '' === $client_id ) {
-			return new \WP_Error( 'invalid_token', __( 'Missing token or client ID.', 'reminder-manager' ) );
+			return new \WP_Error( 'invalid_token', __( 'Missing token or client ID.', 'notifycrew' ) );
 		}
 
 		$response = wp_remote_get(
 			'https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode( $id_token ),
-			array( 'timeout' => 10, 'sslverify' => true )
+			array(
+				'timeout'   => 10,
+				'sslverify' => true,
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -463,7 +534,7 @@ class Rest_Service {
 		$code = (int) wp_remote_retrieve_response_code( $response );
 		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		if ( 200 !== $code || ! is_array( $body ) ) {
-			return new \WP_Error( 'invalid_google_response', __( 'Google token verification failed.', 'reminder-manager' ) );
+			return new \WP_Error( 'invalid_google_response', __( 'Google token verification failed.', 'notifycrew' ) );
 		}
 
 		$aud            = isset( $body['aud'] ) ? (string) $body['aud'] : '';
@@ -471,10 +542,10 @@ class Rest_Service {
 		$email_verified = isset( $body['email_verified'] ) ? (string) $body['email_verified'] : 'false';
 
 		if ( $aud !== $client_id ) {
-			return new \WP_Error( 'invalid_audience', __( 'Invalid Google token audience.', 'reminder-manager' ) );
+			return new \WP_Error( 'invalid_audience', __( 'Invalid Google token audience.', 'notifycrew' ) );
 		}
 		if ( '' === $email || 'true' !== strtolower( $email_verified ) ) {
-			return new \WP_Error( 'invalid_email', __( 'Google account email is not verified.', 'reminder-manager' ) );
+			return new \WP_Error( 'invalid_email', __( 'Google account email is not verified.', 'notifycrew' ) );
 		}
 
 		return $email;

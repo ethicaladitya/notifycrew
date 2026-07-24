@@ -1,0 +1,8 @@
+vendor/
+.wordpress-org/
+.release/
+dist/
+*.zip
+.DS_Store
+frontend-app/
+composer.lock

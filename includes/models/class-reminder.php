@@ -2,10 +2,10 @@
 /**
  * Reminder model (plain data object).
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Models;
+namespace Aditya\NotifyCrew\Models;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {

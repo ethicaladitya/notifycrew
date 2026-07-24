@@ -1,39 +1,39 @@
-/* Team Reminder Tool – Admin Stylesheet */
+/* NotifyCrew – Admin Stylesheet */
 
 /* ------------------------------------------------------------------ */
 /* Wrapper                                                              */
 /* ------------------------------------------------------------------ */
-.trt-wrap {
+.ncrw-wrap {
 	max-width: 1200px;
 }
 
 /* ------------------------------------------------------------------ */
 /* Two-column layout (Tags page)                                        */
 /* ------------------------------------------------------------------ */
-.trt-two-col {
+.ncrw-two-col {
 	display: flex;
 	gap: 24px;
 	margin-top: 16px;
 	align-items: flex-start;
 }
 
-.trt-col-main {
+.ncrw-col-main {
 	flex: 1 1 auto;
 	min-width: 0;
 }
 
-.trt-col-side {
+.ncrw-col-side {
 	flex: 0 0 300px;
 }
 
-.trt-box {
+.ncrw-box {
 	background: #fff;
 	border: 1px solid #c3c4c7;
 	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
 	padding: 16px;
 }
 
-.trt-box h2 {
+.ncrw-box h2 {
 	margin-top: 0;
 	font-size: 14px;
 	border-bottom: 1px solid #dcdcde;
@@ -43,7 +43,7 @@
 /* ------------------------------------------------------------------ */
 /* Status badges                                                        */
 /* ------------------------------------------------------------------ */
-.trt-status {
+.ncrw-status {
 	display: inline-block;
 	padding: 2px 8px;
 	border-radius: 3px;
@@ -52,15 +52,15 @@
 	text-transform: capitalize;
 }
 
-.trt-status--pending  { background: #fff3cd; color: #856404; }
-.trt-status--sent     { background: #d1e7dd; color: #0a3622; }
-.trt-status--failed   { background: #f8d7da; color: #58151c; }
-.trt-status--completed { background: #cff4fc; color: #055160; }
+.ncrw-status--pending  { background: #fff3cd; color: #856404; }
+.ncrw-status--sent     { background: #d1e7dd; color: #0a3622; }
+.ncrw-status--failed   { background: #f8d7da; color: #58151c; }
+.ncrw-status--completed { background: #cff4fc; color: #055160; }
 
 /* ------------------------------------------------------------------ */
 /* Webhook / general badges                                             */
 /* ------------------------------------------------------------------ */
-.trt-badge {
+.ncrw-badge {
 	display: inline-block;
 	padding: 3px 10px;
 	border-radius: 3px;
@@ -68,25 +68,25 @@
 	font-weight: 600;
 }
 
-.trt-badge--success { background: #d1e7dd; color: #0a3622; }
-.trt-badge--warning { background: #fff3cd; color: #856404; }
+.ncrw-badge--success { background: #d1e7dd; color: #0a3622; }
+.ncrw-badge--warning { background: #fff3cd; color: #856404; }
 
 /* ------------------------------------------------------------------ */
 /* Table tweaks                                                         */
 /* ------------------------------------------------------------------ */
-.trt-table th,
-.trt-table td {
+.ncrw-table th,
+.ncrw-table td {
 	vertical-align: middle;
 }
 
 /* ------------------------------------------------------------------ */
 /* Delete button                                                        */
 /* ------------------------------------------------------------------ */
-.trt-btn-delete {
+.ncrw-btn-delete {
 	color: #b32d2e;
 }
 
-.trt-btn-delete:hover {
+.ncrw-btn-delete:hover {
 	color: #8a1f20;
 }
 
@@ -94,11 +94,11 @@
 /* Responsive                                                           */
 /* ------------------------------------------------------------------ */
 @media screen and (max-width: 782px) {
-	.trt-two-col {
+	.ncrw-two-col {
 		flex-direction: column;
 	}
 
-	.trt-col-side {
+	.ncrw-col-side {
 		flex: 1 1 auto;
 		width: 100%;
 	}

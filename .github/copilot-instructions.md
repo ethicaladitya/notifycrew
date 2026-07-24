@@ -1,21 +1,21 @@
-how# Team Reminder Tool Copilot Instructions
+how# NotifyCrew Copilot Instructions
 
 This repository is a production-style WordPress plugin for scheduled Slack reminders with retry logic.
 
 ## Project Snapshot
-- Plugin root: team-reminder-tool.php
-- Namespace: Aditya\\ReminderTool\\
-- Text domain: reminder-manager
+- Plugin root: notifycrew.php
+- Namespace: Aditya\\NotifyCrew\\
+- Entry: notifycrew.php
 - Minimums: PHP 7.4+, WordPress 5.8+
-- Bootstrap constants: TRT_VERSION, TRT_DB_VERSION, TRT_FILE, TRT_DIR, TRT_URL, TRT_BASENAME
+- Bootstrap constants: NCRW_VERSION, NCRW_DB_VERSION, NCRW_FILE, NCRW_DIR, NCRW_URL, NCRW_BASENAME
 
 ## Architecture Map
-- team-reminder-tool.php
+- notifycrew.php
   - Defines constants, loads autoloader, registers activation/deactivation hooks, boots Plugin singleton.
 - includes/class-plugin.php
   - Plugin orchestrator: i18n, DB migration check, cron, REST, admin registration.
 - includes/class-autoloader.php
-  - Custom PSR-4 style loader for Aditya\\ReminderTool\\*.
+  - Custom PSR-4 style loader for Aditya\\NotifyCrew\\*.
 
 ### Admin Layer
 - includes/admin/class-admin.php
@@ -30,7 +30,7 @@ This repository is a production-style WordPress plugin for scheduled Slack remin
 ### Domain/Data Layer
 - includes/database/class-database.php
   - Creates/updates tables with dbDelta.
-  - Tables: trt_reminders, trt_tags, trt_logs.
+  - Tables: ncrw_reminders, ncrw_tags, ncrw_logs.
 - includes/models/class-reminder.php
   - Typed reminder DTO from DB row.
 - includes/models/class-tag.php
@@ -51,15 +51,15 @@ This repository is a production-style WordPress plugin for scheduled Slack remin
 ### Assets and I18n
 - assets/css/admin.css: Admin UI styling.
 - assets/js/admin.js: Confirm delete, trigger manual processing via REST, auto-dismiss notices.
-- languages/team-reminder-tool.pot: Translation template.
+- languages/notifycrew.pot: Translation template.
 
 ## Data and Options
-- DB version option: trt_db_version
-- General settings option: trt_options
+- DB version option: ncrw_db_version
+- General settings option: ncrw_options
 - Slack options:
-  - trt_slack_webhook (encrypted)
-  - trt_slack_channel
-  - trt_slack_username
+  - ncrw_slack_webhook (encrypted)
+  - ncrw_slack_channel
+  - ncrw_slack_username
 
 ## Runtime Flows
 1. Reminder created in admin page -> stored as pending.
@@ -74,7 +74,7 @@ This repository is a production-style WordPress plugin for scheduled Slack remin
 - Keep nonce + capability checks on all mutating admin/REST actions.
 - Do not expose stored webhook values in admin UI or logs.
 - Keep SQL prepared except where identifiers are safely whitelisted.
-- Use text domain team-reminder-tool for all user-facing strings.
+- Use text domain notifycrew for all user-facing strings.
 - Keep compatibility with PHP 7.4 (avoid 8.x-only syntax/features).
 
 ## Quick Checkpoints After Changes

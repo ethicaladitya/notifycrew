@@ -1,11 +1,11 @@
 # Copilot Quick Context
 
 ## Plugin Identity
-- Name: Team Reminder Tool
+- Name: NotifyCrew
 - Type: WordPress plugin
-- Entry: team-reminder-tool.php
-- Namespace: Aditya\\ReminderTool\\
-- Text domain: team-reminder-tool
+- Entry: notifycrew.php
+- Namespace: Aditya\\NotifyCrew\\
+- Text domain: notifycrew
 
 ## Module Map
 - includes/class-plugin.php: Bootstraps DB, cron, REST, and admin components.
@@ -25,6 +25,6 @@
 ## Guardrails
 - Keep capability checks + nonces for all mutating operations.
 - Keep sanitize/escape behavior everywhere.
-- Preserve WP i18n wrappers with text domain team-reminder-tool.
+- Preserve WP i18n wrappers with text domain notifycrew.
 - Keep webhook secrets masked and encrypted.
 - Preserve existing hooks, option keys, and route namespace unless change is intentional.

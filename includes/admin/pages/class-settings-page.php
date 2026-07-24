@@ -2,17 +2,17 @@
 /**
  * Admin settings page.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Admin\Pages;
+namespace Aditya\NotifyCrew\Admin\Pages;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Aditya\ReminderTool\Services\Slack_Service;
+use Aditya\NotifyCrew\Services\Slack_Service;
 
 /**
  * Class Settings_Page
@@ -20,10 +20,10 @@ use Aditya\ReminderTool\Services\Slack_Service;
 class Settings_Page {
 
 	/** Settings group identifier. */
-	const OPTION_GROUP = 'trt_settings';
+	const OPTION_GROUP = 'ncrw_settings';
 
 	/** Option name for general settings. */
-	const OPTION_NAME = 'trt_options';
+	const OPTION_NAME = 'ncrw_options';
 
 	/**
 	 * Singleton instance.
@@ -47,7 +47,7 @@ class Settings_Page {
 	 */
 	public function register(): void {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
-		add_action( 'admin_post_trt_save_slack_credentials', array( $this, 'handle_slack_save' ) );
+		add_action( 'admin_post_ncrw_save_slack_credentials', array( $this, 'handle_slack_save' ) );
 	}
 
 	/**
@@ -63,15 +63,15 @@ class Settings_Page {
 			)
 		);
 
-		add_settings_section( 'trt_general', __( 'General', 'reminder-manager' ), '__return_false', 'trt-settings' );
-		add_settings_field( 'visibility', __( 'Reminder Visibility', 'reminder-manager' ), array( $this, 'field_visibility' ), 'trt-settings', 'trt_general' );
-		add_settings_field( 'allow_uninstall_cleanup', __( 'Data Cleanup', 'reminder-manager' ), array( $this, 'field_allow_uninstall_cleanup' ), 'trt-settings', 'trt_general' );
+		add_settings_section( 'ncrw_general', __( 'General', 'notifycrew' ), '__return_false', 'ncrw-settings' );
+		add_settings_field( 'visibility', __( 'Reminder Visibility', 'notifycrew' ), array( $this, 'field_visibility' ), 'ncrw-settings', 'ncrw_general' );
+		add_settings_field( 'allow_uninstall_cleanup', __( 'Data Cleanup', 'notifycrew' ), array( $this, 'field_allow_uninstall_cleanup' ), 'ncrw-settings', 'ncrw_general' );
 
-		add_settings_section( 'trt_frontend', __( 'Frontend Reminder Intake', 'reminder-manager' ), '__return_false', 'trt-settings' );
-		add_settings_field( 'frontend_enabled', __( 'Enable Frontend Form', 'reminder-manager' ), array( $this, 'field_frontend_enabled' ), 'trt-settings', 'trt_frontend' );
-		add_settings_field( 'frontend_google_client_id', __( 'Google OAuth Client ID', 'reminder-manager' ), array( $this, 'field_frontend_google_client_id' ), 'trt-settings', 'trt_frontend' );
-		add_settings_field( 'frontend_allowed_domains', __( 'Allowed Email Domains', 'reminder-manager' ), array( $this, 'field_frontend_allowed_domains' ), 'trt-settings', 'trt_frontend' );
-		add_settings_field( 'frontend_api_key', __( 'Headless API Key', 'reminder-manager' ), array( $this, 'field_frontend_api_key' ), 'trt-settings', 'trt_frontend' );
+		add_settings_section( 'ncrw_frontend', __( 'Frontend Reminder Intake', 'notifycrew' ), '__return_false', 'ncrw-settings' );
+		add_settings_field( 'frontend_enabled', __( 'Enable Frontend Form', 'notifycrew' ), array( $this, 'field_frontend_enabled' ), 'ncrw-settings', 'ncrw_frontend' );
+		add_settings_field( 'frontend_google_client_id', __( 'Google OAuth Client ID', 'notifycrew' ), array( $this, 'field_frontend_google_client_id' ), 'ncrw-settings', 'ncrw_frontend' );
+		add_settings_field( 'frontend_allowed_domains', __( 'Allowed Email Domains', 'notifycrew' ), array( $this, 'field_frontend_allowed_domains' ), 'ncrw-settings', 'ncrw_frontend' );
+		add_settings_field( 'frontend_api_key', __( 'Headless API Key', 'notifycrew' ), array( $this, 'field_frontend_api_key' ), 'ncrw-settings', 'ncrw_frontend' );
 	}
 
 	/**
@@ -96,7 +96,7 @@ class Settings_Page {
 			$output['frontend_google_client_id'] = sanitize_text_field( $input['frontend_google_client_id'] );
 		}
 
-		$raw_domains = isset( $input['frontend_allowed_domains'] ) ? (string) $input['frontend_allowed_domains'] : 'example.com';
+		$raw_domains                        = isset( $input['frontend_allowed_domains'] ) ? (string) $input['frontend_allowed_domains'] : 'example.com';
 		$output['frontend_allowed_domains'] = $this->normalize_domain_list( $raw_domains );
 
 		if ( isset( $input['frontend_api_key'] ) ) {
@@ -144,10 +144,10 @@ class Settings_Page {
 		$current = $options['visibility'] ?? 'all';
 		?>
 		<select name="<?php echo esc_attr( self::OPTION_NAME . '[visibility]' ); ?>">
-			<option value="all" <?php selected( $current, 'all' ); ?>><?php esc_html_e( 'All Users', 'reminder-manager' ); ?></option>
-			<option value="admin_only" <?php selected( $current, 'admin_only' ); ?>><?php esc_html_e( 'Admins Only', 'reminder-manager' ); ?></option>
+			<option value="all" <?php selected( $current, 'all' ); ?>><?php esc_html_e( 'All Users', 'notifycrew' ); ?></option>
+			<option value="admin_only" <?php selected( $current, 'admin_only' ); ?>><?php esc_html_e( 'Admins Only', 'notifycrew' ); ?></option>
 		</select>
-		<p class="description"><?php esc_html_e( 'Control who can see the reminders front-end.', 'reminder-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Control who can see the reminders front-end.', 'notifycrew' ); ?></p>
 		<?php
 	}
 
@@ -160,9 +160,9 @@ class Settings_Page {
 		?>
 		<label>
 			<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME . '[allow_uninstall_cleanup]' ); ?>" value="1" <?php checked( $enabled ); ?>/>
-			<?php esc_html_e( 'Delete all plugin data when the plugin is uninstalled.', 'reminder-manager' ); ?>
+			<?php esc_html_e( 'Delete all plugin data when the plugin is uninstalled.', 'notifycrew' ); ?>
 		</label>
-		<p class="description"><?php esc_html_e( 'Disabled by default. Enable this only if you explicitly want reminders, teams, logs, and plugin settings to be permanently removed on uninstall.', 'reminder-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Disabled by default. Enable this only if you explicitly want reminders, teams, logs, and plugin settings to be permanently removed on uninstall.', 'notifycrew' ); ?></p>
 		<?php
 	}
 
@@ -175,9 +175,9 @@ class Settings_Page {
 		?>
 		<label>
 			<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME . '[frontend_enabled]' ); ?>" value="1" <?php checked( $enabled ); ?>/>
-			<?php esc_html_e( 'Allow reminder submissions from frontend pages using Google Sign-In.', 'reminder-manager' ); ?>
+			<?php esc_html_e( 'Allow reminder submissions from frontend pages using Google Sign-In.', 'notifycrew' ); ?>
 		</label>
-		<p class="description"><?php esc_html_e( 'Use shortcode [trt_frontend_reminder_form] on any page to render the portal.', 'reminder-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Use shortcode [ncrw_frontend_reminder_form] on any page to render the portal.', 'notifycrew' ); ?></p>
 		<?php
 	}
 
@@ -189,7 +189,7 @@ class Settings_Page {
 		$client_id = isset( $options['frontend_google_client_id'] ) ? (string) $options['frontend_google_client_id'] : '';
 		?>
 		<input type="text" class="regular-text" name="<?php echo esc_attr( self::OPTION_NAME . '[frontend_google_client_id]' ); ?>" value="<?php echo esc_attr( $client_id ); ?>" placeholder="1234567890-abcxyz.apps.googleusercontent.com"/>
-		<p class="description"><?php esc_html_e( 'Required for Google Sign-In token validation.', 'reminder-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Required for Google Sign-In token validation.', 'notifycrew' ); ?></p>
 		<?php
 	}
 
@@ -201,7 +201,7 @@ class Settings_Page {
 		$domains = isset( $options['frontend_allowed_domains'] ) ? (string) $options['frontend_allowed_domains'] : 'example.com';
 		?>
 		<input type="text" class="regular-text" name="<?php echo esc_attr( self::OPTION_NAME . '[frontend_allowed_domains]' ); ?>" value="<?php echo esc_attr( $domains ); ?>" placeholder="example.com"/>
-		<p class="description"><?php esc_html_e( 'Comma-separated domains allowed to sign in.', 'reminder-manager' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Comma-separated domains allowed to sign in.', 'notifycrew' ); ?></p>
 		<?php
 	}
 
@@ -212,8 +212,8 @@ class Settings_Page {
 		$options = get_option( self::OPTION_NAME, array() );
 		$api_key = isset( $options['frontend_api_key'] ) ? (string) $options['frontend_api_key'] : '';
 		?>
-		<input type="text" class="regular-text" name="<?php echo esc_attr( self::OPTION_NAME . '[frontend_api_key]' ); ?>" value="<?php echo esc_attr( $api_key ); ?>" placeholder="trt_live_xxxxxxxxx" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"/>
-		<p class="description"><?php esc_html_e( 'Required for external frontend proxy requests. Keep this secret and only store it in server-side environment variables.', 'reminder-manager' ); ?></p>
+		<input type="text" class="regular-text" name="<?php echo esc_attr( self::OPTION_NAME . '[frontend_api_key]' ); ?>" value="<?php echo esc_attr( $api_key ); ?>" placeholder="ncrw_live_xxxxxxxxx" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"/>
+		<p class="description"><?php esc_html_e( 'Required for external frontend proxy requests. Keep this secret and only store it in server-side environment variables.', 'notifycrew' ); ?></p>
 		<?php
 	}
 
@@ -222,22 +222,30 @@ class Settings_Page {
 	 */
 	public function handle_slack_save(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'reminder-manager' ), 403 );
+			wp_die( esc_html__( 'Permission denied.', 'notifycrew' ), 403 );
 		}
-		check_admin_referer( 'trt_save_slack_credentials', 'trt_slack_nonce' );
+		check_admin_referer( 'ncrw_save_slack_credentials', 'ncrw_slack_nonce' );
 
-		$mode      = sanitize_key( wp_unslash( $_POST['trt_slack_mode'] ?? Slack_Service::MODE_WEBHOOK ) );
-		$webhook   = sanitize_text_field( wp_unslash( $_POST['trt_slack_webhook'] ?? '' ) );
-		$bot_token = sanitize_text_field( wp_unslash( $_POST['trt_slack_bot_token'] ?? '' ) );
-		$username  = sanitize_text_field( wp_unslash( $_POST['trt_slack_username'] ?? '' ) );
+		$mode      = sanitize_key( wp_unslash( $_POST['ncrw_slack_mode'] ?? Slack_Service::MODE_WEBHOOK ) );
+		$webhook   = sanitize_text_field( wp_unslash( $_POST['ncrw_slack_webhook'] ?? '' ) );
+		$bot_token = sanitize_text_field( wp_unslash( $_POST['ncrw_slack_bot_token'] ?? '' ) );
+		$username  = sanitize_text_field( wp_unslash( $_POST['ncrw_slack_username'] ?? '' ) );
 
 		$slack = Slack_Service::get_instance();
 		$slack->save_mode( $mode );
 		if ( '' !== $webhook ) {
 			if ( ! filter_var( $webhook, FILTER_VALIDATE_URL ) ) {
-				add_settings_error( 'trt_slack', 'invalid_webhook', __( 'Please enter a valid Slack webhook URL.', 'reminder-manager' ), 'error' );
+				add_settings_error( 'ncrw_slack', 'invalid_webhook', __( 'Please enter a valid Slack webhook URL.', 'notifycrew' ), 'error' );
 				set_transient( 'settings_errors', get_settings_errors(), 30 );
-				wp_safe_redirect( add_query_arg( array( 'page' => 'trt-settings', 'trt_error' => '1' ), admin_url( 'admin.php' ) ) );
+				wp_safe_redirect(
+					add_query_arg(
+						array(
+							'page'       => 'ncrw-settings',
+							'ncrw_error' => '1',
+						),
+						admin_url( 'admin.php' )
+					)
+				);
 				exit;
 			}
 			$slack->save_webhook( $webhook );
@@ -247,7 +255,15 @@ class Settings_Page {
 		}
 		$slack->save_username( $username );
 
-		wp_safe_redirect( add_query_arg( array( 'page' => 'trt-settings', 'updated' => '1' ), admin_url( 'admin.php' ) ) );
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'    => 'ncrw-settings',
+					'updated' => '1',
+				),
+				admin_url( 'admin.php' )
+			)
+		);
 		exit;
 	}
 
@@ -256,7 +272,7 @@ class Settings_Page {
 	 */
 	public function render(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'Permission denied.', 'reminder-manager' ) );
+			wp_die( esc_html__( 'Permission denied.', 'notifycrew' ) );
 		}
 
 		$slack     = Slack_Service::get_instance();
@@ -264,71 +280,71 @@ class Settings_Page {
 		$has_hook  = $slack->has_webhook();
 		$has_token = $slack->has_bot_token();
 		?>
-		<div class="wrap trt-wrap">
-			<h1><?php esc_html_e( 'Team Reminder Tool - Settings', 'reminder-manager' ); ?></h1>
+		<div class="wrap ncrw-wrap">
+			<h1><?php esc_html_e( 'NotifyCrew - Settings', 'notifycrew' ); ?></h1>
 
 			<?php if ( isset( $_GET['updated'] ) && '1' === $_GET['updated'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'reminder-manager' ); ?></p></div>
+				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Settings saved.', 'notifycrew' ); ?></p></div>
 			<?php endif; ?>
-			<?php if ( isset( $_GET['trt_error'] ) && '1' === $_GET['trt_error'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-				<?php settings_errors( 'trt_slack' ); ?>
+			<?php if ( isset( $_GET['ncrw_error'] ) && '1' === $_GET['ncrw_error'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<?php settings_errors( 'ncrw_slack' ); ?>
 			<?php endif; ?>
 
 			<form method="post" action="options.php">
 				<?php
 				settings_fields( self::OPTION_GROUP );
-				do_settings_sections( 'trt-settings' );
-				submit_button( __( 'Save Settings', 'reminder-manager' ) );
+				do_settings_sections( 'ncrw-settings' );
+				submit_button( __( 'Save Settings', 'notifycrew' ) );
 				?>
 			</form>
 
 			<hr/>
-			<h2><?php esc_html_e( 'Slack Integration', 'reminder-manager' ); ?></h2>
+			<h2><?php esc_html_e( 'Slack Integration', 'notifycrew' ); ?></h2>
 			<p>
 				<?php if ( $has_hook || $has_token ) : ?>
-					<span class="trt-badge trt-badge--success"><?php esc_html_e( 'Slack credentials configured', 'reminder-manager' ); ?></span>
+					<span class="ncrw-badge ncrw-badge--success"><?php esc_html_e( 'Slack credentials configured', 'notifycrew' ); ?></span>
 				<?php else : ?>
-					<span class="trt-badge trt-badge--warning"><?php esc_html_e( 'No Slack credentials configured', 'reminder-manager' ); ?></span>
+					<span class="ncrw-badge ncrw-badge--warning"><?php esc_html_e( 'No Slack credentials configured', 'notifycrew' ); ?></span>
 				<?php endif; ?>
 			</p>
 
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="trt_save_slack_credentials"/>
-				<?php wp_nonce_field( 'trt_save_slack_credentials', 'trt_slack_nonce' ); ?>
+				<input type="hidden" name="action" value="ncrw_save_slack_credentials"/>
+				<?php wp_nonce_field( 'ncrw_save_slack_credentials', 'ncrw_slack_nonce' ); ?>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th scope="row"><label for="trt_slack_mode"><?php esc_html_e( 'Auth Mode', 'reminder-manager' ); ?></label></th>
+						<th scope="row"><label for="ncrw_slack_mode"><?php esc_html_e( 'Auth Mode', 'notifycrew' ); ?></label></th>
 						<td>
-							<select id="trt_slack_mode" name="trt_slack_mode">
-								<option value="webhook" <?php selected( $mode, Slack_Service::MODE_WEBHOOK ); ?>><?php esc_html_e( 'Incoming Webhook', 'reminder-manager' ); ?></option>
-								<option value="bot" <?php selected( $mode, Slack_Service::MODE_BOT ); ?>><?php esc_html_e( 'Bot Token (chat.postMessage)', 'reminder-manager' ); ?></option>
+							<select id="ncrw_slack_mode" name="ncrw_slack_mode">
+								<option value="webhook" <?php selected( $mode, Slack_Service::MODE_WEBHOOK ); ?>><?php esc_html_e( 'Incoming Webhook', 'notifycrew' ); ?></option>
+								<option value="bot" <?php selected( $mode, Slack_Service::MODE_BOT ); ?>><?php esc_html_e( 'Bot Token (chat.postMessage)', 'notifycrew' ); ?></option>
 							</select>
-							<p class="description"><?php esc_html_e( 'Choose global Slack authentication mode.', 'reminder-manager' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Choose global Slack authentication mode.', 'notifycrew' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="trt_slack_webhook"><?php esc_html_e( 'Slack Webhook URL', 'reminder-manager' ); ?></label></th>
+						<th scope="row"><label for="ncrw_slack_webhook"><?php esc_html_e( 'Slack Webhook URL', 'notifycrew' ); ?></label></th>
 						<td>
-							<input type="url" id="trt_slack_webhook" name="trt_slack_webhook" class="regular-text" placeholder="https://hooks.slack.com/services/..." autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"/>
-							<p class="description"><?php esc_html_e( 'Stored encrypted. Leave empty to keep current value.', 'reminder-manager' ); ?></p>
+							<input type="url" id="ncrw_slack_webhook" name="ncrw_slack_webhook" class="regular-text" placeholder="https://hooks.slack.com/services/..." autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true"/>
+							<p class="description"><?php esc_html_e( 'Stored encrypted. Leave empty to keep current value.', 'notifycrew' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="trt_slack_bot_token"><?php esc_html_e( 'Slack Bot Token', 'reminder-manager' ); ?></label></th>
+						<th scope="row"><label for="ncrw_slack_bot_token"><?php esc_html_e( 'Slack Bot Token', 'notifycrew' ); ?></label></th>
 						<td>
-							<input type="password" id="trt_slack_bot_token" name="trt_slack_bot_token" class="regular-text" placeholder="xoxb-..." autocomplete="new-password"/>
-							<p class="description"><?php esc_html_e( 'Stored encrypted. Leave empty to keep current value.', 'reminder-manager' ); ?></p>
+							<input type="password" id="ncrw_slack_bot_token" name="ncrw_slack_bot_token" class="regular-text" placeholder="xoxb-..." autocomplete="new-password"/>
+							<p class="description"><?php esc_html_e( 'Stored encrypted. Leave empty to keep current value.', 'notifycrew' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="trt_slack_username"><?php esc_html_e( 'Bot Username', 'reminder-manager' ); ?></label></th>
+						<th scope="row"><label for="ncrw_slack_username"><?php esc_html_e( 'Bot Username', 'notifycrew' ); ?></label></th>
 						<td>
-							<input type="text" id="trt_slack_username" name="trt_slack_username" class="regular-text" value="<?php echo esc_attr( $slack->get_username() ); ?>" placeholder="reminder_bot"/>
-							<p class="description"><?php esc_html_e( 'Optional display name override.', 'reminder-manager' ); ?></p>
+							<input type="text" id="ncrw_slack_username" name="ncrw_slack_username" class="regular-text" value="<?php echo esc_attr( $slack->get_username() ); ?>" placeholder="reminder_bot"/>
+							<p class="description"><?php esc_html_e( 'Optional display name override.', 'notifycrew' ); ?></p>
 						</td>
 					</tr>
 				</table>
-				<?php submit_button( __( 'Save Slack Credentials', 'reminder-manager' ) ); ?>
+				<?php submit_button( __( 'Save Slack Credentials', 'notifycrew' ) ); ?>
 			</form>
 		</div>
 		<?php

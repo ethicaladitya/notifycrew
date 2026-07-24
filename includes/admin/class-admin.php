@@ -2,19 +2,19 @@
 /**
  * Admin orchestrator — registers all admin menus and sub-pages.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Admin;
+namespace Aditya\NotifyCrew\Admin;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-use Aditya\ReminderTool\Admin\Pages\Settings_Page;
-use Aditya\ReminderTool\Admin\Pages\Reminders_Page;
-use Aditya\ReminderTool\Admin\Pages\Teams_Page;
+use Aditya\NotifyCrew\Admin\Pages\Settings_Page;
+use Aditya\NotifyCrew\Admin\Pages\Reminders_Page;
+use Aditya\NotifyCrew\Admin\Pages\Teams_Page;
 
 /**
  * Class Admin
@@ -61,9 +61,10 @@ class Admin {
 		}
 
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$recent_failure = $wpdb->get_row(
 			"SELECT reminder_id, message, created_at
-			 FROM {$wpdb->prefix}trt_logs
+			 FROM {$wpdb->prefix}ncrw_logs
 			 WHERE event IN ('retry_scheduled','completed')
 			   AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
 			 ORDER BY created_at DESC LIMIT 1"
@@ -73,14 +74,14 @@ class Admin {
 			return;
 		}
 
-		$settings_url = add_query_arg( 'page', 'trt-settings', admin_url( 'admin.php' ) );
+		$settings_url = add_query_arg( 'page', 'ncrw-settings', admin_url( 'admin.php' ) );
 		printf(
 			'<div class="notice notice-error"><p><strong>%s</strong> %s &mdash; <em>%s</em> &mdash; <a href="%s">%s</a></p></div>',
-			esc_html__( 'Reminder Manager:', 'reminder-manager' ),
-			esc_html__( 'Recent Slack delivery failures detected.', 'reminder-manager' ),
+			esc_html__( 'Reminder Manager:', 'notifycrew' ),
+			esc_html__( 'Recent Slack delivery failures detected.', 'notifycrew' ),
 			esc_html( $recent_failure->message ),
 			esc_url( $settings_url ),
-			esc_html__( 'Check Slack Settings', 'reminder-manager' )
+			esc_html__( 'Check Slack Settings', 'notifycrew' )
 		);
 	}
 
@@ -89,48 +90,48 @@ class Admin {
 	 */
 	public function add_menu_pages(): void {
 		add_menu_page(
-			__( 'Team Reminder Tool', 'reminder-manager' ),
-			__( 'Reminders', 'reminder-manager' ),
+			__( 'NotifyCrew', 'notifycrew' ),
+			__( 'Reminders', 'notifycrew' ),
 			'manage_options',
-			'trt-reminders',
+			'ncrw-reminders',
 			array( Reminders_Page::get_instance(), 'render' ),
 			'dashicons-bell',
 			56
 		);
 
 		add_submenu_page(
-			'trt-reminders',
-			__( 'All Reminders', 'reminder-manager' ),
-			__( 'All Reminders', 'reminder-manager' ),
+			'ncrw-reminders',
+			__( 'All Reminders', 'notifycrew' ),
+			__( 'All Reminders', 'notifycrew' ),
 			'manage_options',
-			'trt-reminders',
+			'ncrw-reminders',
 			array( Reminders_Page::get_instance(), 'render' )
 		);
 
 		add_submenu_page(
-			'trt-reminders',
-			__( 'Add Reminder', 'reminder-manager' ),
-			__( 'Add Reminder', 'reminder-manager' ),
+			'ncrw-reminders',
+			__( 'Add Reminder', 'notifycrew' ),
+			__( 'Add Reminder', 'notifycrew' ),
 			'manage_options',
-			'trt-add-reminder',
+			'ncrw-add-reminder',
 			array( Reminders_Page::get_instance(), 'render_add' )
 		);
 
 		add_submenu_page(
-			'trt-reminders',
-			__( 'Teams', 'reminder-manager' ),
-			__( 'Teams', 'reminder-manager' ),
+			'ncrw-reminders',
+			__( 'Teams', 'notifycrew' ),
+			__( 'Teams', 'notifycrew' ),
 			'manage_options',
-			'trt-teams',
+			'ncrw-teams',
 			array( Teams_Page::get_instance(), 'render' )
 		);
 
 		add_submenu_page(
-			'trt-reminders',
-			__( 'Settings', 'reminder-manager' ),
-			__( 'Settings', 'reminder-manager' ),
+			'ncrw-reminders',
+			__( 'Settings', 'notifycrew' ),
+			__( 'Settings', 'notifycrew' ),
 			'manage_options',
-			'trt-settings',
+			'ncrw-settings',
 			array( Settings_Page::get_instance(), 'render' )
 		);
 	}
@@ -142,10 +143,10 @@ class Admin {
 	 */
 	public function enqueue_assets( string $hook_suffix ): void {
 		$plugin_pages = array(
-			'toplevel_page_trt-reminders',
-			'reminders_page_trt-add-reminder',
-			'reminders_page_trt-teams',
-			'reminders_page_trt-settings',
+			'toplevel_page_ncrw-reminders',
+			'reminders_page_ncrw-add-reminder',
+			'reminders_page_ncrw-teams',
+			'reminders_page_ncrw-settings',
 		);
 
 		if ( ! in_array( $hook_suffix, $plugin_pages, true ) ) {
@@ -153,34 +154,34 @@ class Admin {
 		}
 
 		wp_enqueue_style(
-			'trt-admin',
-			TRT_URL . 'assets/css/admin.css',
+			'ncrw-admin',
+			NCRW_URL . 'assets/css/admin.css',
 			array(),
-			TRT_VERSION
+			NCRW_VERSION
 		);
 
 		wp_enqueue_script(
-			'trt-admin',
-			TRT_URL . 'assets/js/admin.js',
+			'ncrw-admin',
+			NCRW_URL . 'assets/js/admin.js',
 			array( 'jquery' ),
-			TRT_VERSION,
+			NCRW_VERSION,
 			true
 		);
 
 		wp_localize_script(
-			'trt-admin',
-			'trtAdmin',
+			'ncrw-admin',
+			'ncrwAdmin',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'trt_admin_nonce' ),
-				'restUrl' => rest_url( 'trt/v1' ),
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'nonce'     => wp_create_nonce( 'ncrw_admin_nonce' ),
+				'restUrl'   => rest_url( 'ncrw/v1' ),
 				'restNonce' => wp_create_nonce( 'wp_rest' ),
-				'i18n'    => array(
-					'confirmDelete' => __( 'Are you sure you want to delete this?', 'reminder-manager' ),
-					'confirmRetry'  => __( 'Queue this reminder for immediate retry?', 'reminder-manager' ),
-					'processing'    => __( 'Processing…', 'reminder-manager' ),
-					'success'       => __( 'Done!', 'reminder-manager' ),
-					'error'         => __( 'An error occurred. Please try again.', 'reminder-manager' ),
+				'i18n'      => array(
+					'confirmDelete' => __( 'Are you sure you want to delete this?', 'notifycrew' ),
+					'confirmRetry'  => __( 'Queue this reminder for immediate retry?', 'notifycrew' ),
+					'processing'    => __( 'Processing…', 'notifycrew' ),
+					'success'       => __( 'Done!', 'notifycrew' ),
+					'error'         => __( 'An error occurred. Please try again.', 'notifycrew' ),
 				),
 			)
 		);

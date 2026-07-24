@@ -12,6 +12,7 @@ zip -r "$OUTPUT_ZIP" "$PROJECT_NAME" \
   -x "${PROJECT_NAME}/.git/*" \
   "${PROJECT_NAME}/.github/*" \
   "${PROJECT_NAME}/.release/*" \
+  "${PROJECT_NAME}/.wordpress-org/*" \
   "${PROJECT_NAME}/dist/*" \
   "${PROJECT_NAME}/frontend-app/node_modules/*" \
   "${PROJECT_NAME}/frontend-app/dist/*" \

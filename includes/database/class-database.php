@@ -2,10 +2,10 @@
 /**
  * Database management: table creation and schema upgrades via dbDelta.
  *
- * @package Aditya\ReminderTool
+ * @package Aditya\NotifyCrew
  */
 
-namespace Aditya\ReminderTool\Database;
+namespace Aditya\NotifyCrew\Database;
 
 // Prevent direct file access.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -31,7 +31,7 @@ class Database {
 	 *
 	 * @var string
 	 */
-	const DB_VERSION_OPTION = 'trt_db_version';
+	const DB_VERSION_OPTION = 'ncrw_db_version';
 
 	/**
 	 * Get singleton instance.
@@ -55,7 +55,7 @@ class Database {
 	 */
 	public function install(): void {
 		$this->run_migrations();
-		update_option( self::DB_VERSION_OPTION, TRT_DB_VERSION );
+		update_option( self::DB_VERSION_OPTION, NCRW_DB_VERSION );
 	}
 
 	/**
@@ -63,7 +63,7 @@ class Database {
 	 */
 	public function maybe_upgrade(): void {
 		$stored = get_option( self::DB_VERSION_OPTION, '0.0.0' );
-		if ( version_compare( $stored, TRT_DB_VERSION, '<' ) ) {
+		if ( version_compare( $stored, NCRW_DB_VERSION, '<' ) ) {
 			$this->install();
 		}
 	}
@@ -80,7 +80,7 @@ class Database {
 		// ------------------------------------------------------------------ //
 		// teams table                                                          //
 		// ------------------------------------------------------------------ //
-		$sql_teams = "CREATE TABLE {$wpdb->prefix}trt_teams (
+		$sql_teams = "CREATE TABLE {$wpdb->prefix}ncrw_teams (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			name VARCHAR(190) NOT NULL DEFAULT '',
 			slug VARCHAR(190) NOT NULL DEFAULT '',
@@ -96,7 +96,7 @@ class Database {
 		// ------------------------------------------------------------------ //
 		// team users table                                                     //
 		// ------------------------------------------------------------------ //
-		$sql_team_users = "CREATE TABLE {$wpdb->prefix}trt_team_users (
+		$sql_team_users = "CREATE TABLE {$wpdb->prefix}ncrw_team_users (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			team_id BIGINT(20) UNSIGNED NOT NULL,
 			user_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
@@ -113,7 +113,7 @@ class Database {
 		// ------------------------------------------------------------------ //
 		// reminders table                                                      //
 		// ------------------------------------------------------------------ //
-		$sql_reminders = "CREATE TABLE {$wpdb->prefix}trt_reminders (
+		$sql_reminders = "CREATE TABLE {$wpdb->prefix}ncrw_reminders (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			team_id BIGINT(20) UNSIGNED NOT NULL,
 			user_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
@@ -136,7 +136,7 @@ class Database {
 		// ------------------------------------------------------------------ //
 		// logs table                                                           //
 		// ------------------------------------------------------------------ //
-		$sql_logs = "CREATE TABLE {$wpdb->prefix}trt_logs (
+		$sql_logs = "CREATE TABLE {$wpdb->prefix}ncrw_logs (
 			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 			team_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
 			reminder_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
@@ -169,10 +169,14 @@ class Database {
 		global $wpdb;
 
 		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- Table names are derived from $wpdb->prefix, safe.
-		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}trt_logs" );
-		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}trt_reminders" );
-		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}trt_team_users" );
-		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}trt_teams" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}ncrw_logs" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}ncrw_reminders" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}ncrw_team_users" );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}ncrw_teams" );
 		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 
 		delete_option( self::DB_VERSION_OPTION );
