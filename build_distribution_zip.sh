@@ -14,8 +14,13 @@ zip -r "$OUTPUT_ZIP" "$PROJECT_NAME" \
   "${PROJECT_NAME}/.release/*" \
   "${PROJECT_NAME}/.wordpress-org/*" \
   "${PROJECT_NAME}/dist/*" \
-  "${PROJECT_NAME}/frontend-app/node_modules/*" \
-  "${PROJECT_NAME}/frontend-app/dist/*" \
+  "${PROJECT_NAME}/frontend-app/*" \
+  "${PROJECT_NAME}/vendor/*" \
+  "${PROJECT_NAME}/AGENTS.md" \
+  "${PROJECT_NAME}/COPILOT.md" \
+  "${PROJECT_NAME}/composer.json" \
+  "${PROJECT_NAME}/composer.lock" \
+  "${PROJECT_NAME}/build_distribution_zip.sh" \
   "${PROJECT_NAME}/*.zip" \
   "${PROJECT_NAME}/.DS_Store" \
   "${PROJECT_NAME}/**/.DS_Store"
