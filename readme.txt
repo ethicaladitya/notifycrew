@@ -127,10 +127,10 @@ Yes. Every user-facing string uses WordPress i18n functions with the `notifycrew
 
 == Screenshots ==
 
-1. The reminders admin list, filterable by team and status, with retry and delivery details.
-2. Creating a reminder with team selector and quick-schedule presets.
-3. Team management — Slack channel, mention tags, and member assignments.
-4. Settings page — encrypted Slack credentials, Google OAuth, and portal configuration.
+1. Before NotifyCrew: reminders scattered across DMs, channels, and forgotten spreadsheets. After: every reminder lives in one place, sorted by team and status, with delivery history at a glance.
+2. Creating a reminder takes seconds. Pick a team, write what needs to happen, and choose a preset like "In 4 hours" — no date picker required.
+3. Every team gets its own Slack channel and mention rules. Engineering posts to #eng-standup with @channel. Design posts to #design. No crossover, no noise.
+4. Slack credentials encrypted with libsodium. Google OAuth for the optional team portal. Every setting in one screen.
 
 == External services ==
 
