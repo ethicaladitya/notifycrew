@@ -35,7 +35,11 @@ class Frontend_Service {
 	 */
 	private static $instance = null;
 
-	/** @return Frontend_Service */
+	/**
+	 * Get the singleton instance.
+	 *
+	 * @return Frontend_Service
+	 */
 	public static function get_instance(): Frontend_Service {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -43,6 +47,9 @@ class Frontend_Service {
 		return self::$instance;
 	}
 
+	/**
+	 * Private constructor.
+	 */
 	private function __construct() {}
 
 	/**
@@ -153,6 +160,37 @@ class Frontend_Service {
 									<option value="0"><?php esc_html_e( 'Custom date & time', 'notifycrew' ); ?></option>
 								</select>
 								<input type="datetime-local" id="ncrw_front_datetime" name="ncrw_reminder_datetime" value="<?php echo esc_attr( $default_datetime ); ?>"/>
+
+								<label for="ncrw_front_recurrence"><?php esc_html_e( 'Repeat', 'notifycrew' ); ?></label>
+								<select id="ncrw_front_recurrence" name="ncrw_recurrence">
+									<option value="none"><?php esc_html_e( 'Does not repeat', 'notifycrew' ); ?></option>
+									<option value="daily"><?php esc_html_e( 'Daily', 'notifycrew' ); ?></option>
+									<option value="weekly"><?php esc_html_e( 'Weekly', 'notifycrew' ); ?></option>
+									<option value="monthly"><?php esc_html_e( 'Monthly', 'notifycrew' ); ?></option>
+									<option value="custom"><?php esc_html_e( 'Custom', 'notifycrew' ); ?></option>
+								</select>
+
+								<div id="ncrw-front-recurrence-options" hidden>
+									<label for="ncrw_front_recurrence_interval"><?php esc_html_e( 'Repeat every (days)', 'notifycrew' ); ?></label>
+									<input type="number" id="ncrw_front_recurrence_interval" name="ncrw_recurrence_interval" min="1" max="365" value="1"/>
+
+									<label for="ncrw_front_recurrence_end_type"><?php esc_html_e( 'Ends', 'notifycrew' ); ?></label>
+									<select id="ncrw_front_recurrence_end_type" name="ncrw_recurrence_end_type">
+										<option value="none"><?php esc_html_e( 'Never', 'notifycrew' ); ?></option>
+										<option value="occurrences"><?php esc_html_e( 'After N occurrences', 'notifycrew' ); ?></option>
+										<option value="date"><?php esc_html_e( 'On date', 'notifycrew' ); ?></option>
+									</select>
+
+									<div id="ncrw-front-recurrence-end-occurrences" hidden>
+										<label for="ncrw_front_recurrence_end_occurrences"><?php esc_html_e( 'Number of occurrences', 'notifycrew' ); ?></label>
+										<input type="number" id="ncrw_front_recurrence_end_occurrences" name="ncrw_recurrence_end_occurrences" min="1"/>
+									</div>
+
+									<div id="ncrw-front-recurrence-end-date" hidden>
+										<label for="ncrw_front_recurrence_end_date"><?php esc_html_e( 'End date', 'notifycrew' ); ?></label>
+										<input type="datetime-local" id="ncrw_front_recurrence_end_date" name="ncrw_recurrence_end_date"/>
+									</div>
+								</div>
 
 								<label for="ncrw_front_link"><?php esc_html_e( 'Task/Ticket/Slack Link', 'notifycrew' ); ?></label>
 								<input type="url" id="ncrw_front_link" name="ncrw_link"/>
@@ -633,18 +671,26 @@ class Frontend_Service {
 			$added_by = $reminder->member_email;
 		}
 
+		$recurrence_end_ts    = $reminder->recurrence_end_date ? strtotime( (string) $reminder->recurrence_end_date . ' UTC' ) : false;
+		$recurrence_end_local = $recurrence_end_ts ? gmdate( 'Y-m-d\TH:i', $recurrence_end_ts ) : '';
+
 		return array(
-			'id'             => (int) $reminder->id,
-			'team_id'        => (int) $reminder->team_id,
-			'title'          => (string) $reminder->title,
-			'remind_at'      => (string) $reminder->remind_at,
-			'datetime_local' => $datetime,
-			'display_time'   => $display,
-			'task_link'      => (string) $reminder->task_link,
-			'comments'       => (string) $reminder->comments,
-			'status'         => (string) $reminder->status,
-			'attempts'       => (int) $reminder->attempts,
-			'added_by'       => $added_by,
+			'id'                         => (int) $reminder->id,
+			'team_id'                    => (int) $reminder->team_id,
+			'title'                      => (string) $reminder->title,
+			'remind_at'                  => (string) $reminder->remind_at,
+			'datetime_local'             => $datetime,
+			'display_time'               => $display,
+			'task_link'                  => (string) $reminder->task_link,
+			'comments'                   => (string) $reminder->comments,
+			'status'                     => (string) $reminder->status,
+			'attempts'                   => (int) $reminder->attempts,
+			'added_by'                   => $added_by,
+			'recurrence'                 => (string) $reminder->recurrence,
+			'recurrence_interval'        => (int) $reminder->recurrence_interval,
+			'recurrence_end_type'        => (string) $reminder->recurrence_end_type,
+			'recurrence_end_occurrences' => $reminder->recurrence_end_occurrences,
+			'recurrence_end_date_local'  => $recurrence_end_local,
 		);
 	}
 
@@ -728,7 +774,7 @@ class Frontend_Service {
 			'team_id'         => (int) $reminder->team_id,
 			'title'           => (string) $reminder->title,
 			'remind_at'       => (string) $reminder->remind_at,
-			'remind_at_ts'    => (int) ( $remind_ts ?: 0 ),
+			'remind_at_ts'    => (int) ( $remind_ts ? $remind_ts : 0 ),
 			'datetime_local'  => $datetime_local,
 			'display_time'    => $display_time,
 			'task_link'       => (string) $reminder->task_link,
@@ -791,7 +837,8 @@ class Frontend_Service {
 	 * @return bool
 	 */
 	private function is_email_domain_allowed( string $email ): bool {
-		$domain = strtolower( (string) substr( strrchr( $email, '@' ) ?: '', 1 ) );
+		$at_position = strrchr( $email, '@' );
+		$domain      = strtolower( (string) substr( $at_position ? $at_position : '', 1 ) );
 		if ( '' === $domain ) {
 			return false;
 		}
@@ -841,13 +888,20 @@ class Frontend_Service {
 			}
 		}
 
+		$recurrence_end_date = sanitize_text_field( wp_unslash( $_POST['ncrw_recurrence_end_date'] ?? '' ) );
+
 		return array(
-			'team_id'     => $team_id,
-			'title'       => sanitize_text_field( wp_unslash( $_POST['ncrw_title'] ?? '' ) ),
-			'remind_at'   => $remind_at,
-			'quick_hours' => $quick_hours,
-			'task_link'   => esc_url_raw( wp_unslash( $_POST['ncrw_link'] ?? '' ) ),
-			'comments'    => sanitize_textarea_field( wp_unslash( $_POST['ncrw_comments'] ?? '' ) ),
+			'team_id'                    => $team_id,
+			'title'                      => sanitize_text_field( wp_unslash( $_POST['ncrw_title'] ?? '' ) ),
+			'remind_at'                  => $remind_at,
+			'quick_hours'                => $quick_hours,
+			'task_link'                  => esc_url_raw( wp_unslash( $_POST['ncrw_link'] ?? '' ) ),
+			'comments'                   => sanitize_textarea_field( wp_unslash( $_POST['ncrw_comments'] ?? '' ) ),
+			'recurrence'                 => sanitize_key( wp_unslash( $_POST['ncrw_recurrence'] ?? 'none' ) ),
+			'recurrence_interval'        => absint( $_POST['ncrw_recurrence_interval'] ?? 1 ),
+			'recurrence_end_type'        => sanitize_key( wp_unslash( $_POST['ncrw_recurrence_end_type'] ?? 'none' ) ),
+			'recurrence_end_occurrences' => absint( $_POST['ncrw_recurrence_end_occurrences'] ?? 0 ),
+			'recurrence_end_date'        => '' !== $recurrence_end_date ? $this->normalize_datetime_input( $recurrence_end_date ) : '',
 		);
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
@@ -878,6 +932,22 @@ class Frontend_Service {
 		}
 		if ( ! empty( $data['task_link'] ) && ! filter_var( (string) $data['task_link'], FILTER_VALIDATE_URL ) ) {
 			$errors[] = 'link';
+		}
+
+		$recurrence = sanitize_key( $data['recurrence'] ?? 'none' );
+		if ( 'none' !== $recurrence ) {
+			$interval = absint( $data['recurrence_interval'] ?? 1 );
+			if ( $interval < 1 || $interval > 365 ) {
+				$errors[] = 'recurrence_interval';
+			}
+
+			$end_type = sanitize_key( $data['recurrence_end_type'] ?? 'none' );
+			if ( 'occurrences' === $end_type && absint( $data['recurrence_end_occurrences'] ?? 0 ) < 1 ) {
+				$errors[] = 'recurrence_end_occurrences';
+			}
+			if ( 'date' === $end_type && ( empty( $data['recurrence_end_date'] ) || ! strtotime( (string) $data['recurrence_end_date'] . ' UTC' ) ) ) {
+				$errors[] = 'recurrence_end_date';
+			}
 		}
 
 		return $errors;

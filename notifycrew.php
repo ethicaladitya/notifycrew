@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       NotifyCrew - Team reminders for Slack
  * Description:       Schedule and deliver team reminders to Slack with automatic retry, Google-authenticated frontend portal, and team management.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Aditya
@@ -21,8 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'NCRW_VERSION', '1.0.0' );
-define( 'NCRW_DB_VERSION', '2.4.0' );
+define( 'NCRW_VERSION', '1.1.0' );
+define( 'NCRW_DB_VERSION', '2.5.0' );
 define( 'NCRW_FILE', __FILE__ );
 define( 'NCRW_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NCRW_URL', plugin_dir_url( __FILE__ ) );

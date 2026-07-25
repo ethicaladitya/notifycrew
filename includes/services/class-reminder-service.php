@@ -29,7 +29,11 @@ class Reminder_Service {
 	 */
 	private static $instance = null;
 
-	/** @return Reminder_Service */
+	/**
+	 * Get the singleton instance.
+	 *
+	 * @return Reminder_Service
+	 */
 	public static function get_instance(): Reminder_Service {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -37,7 +41,19 @@ class Reminder_Service {
 		return self::$instance;
 	}
 
-	private function __construct() {}
+	/**
+	 * Recurrence calculation service.
+	 *
+	 * @var Recurrence_Service
+	 */
+	private $recurrence_service;
+
+	/**
+	 * Private constructor.
+	 */
+	private function __construct() {
+		$this->recurrence_service = Recurrence_Service::get_instance();
+	}
 
 	/**
 	 * Create reminder in a team.
@@ -55,22 +71,27 @@ class Reminder_Service {
 			return false;
 		}
 
+		$recurrence = $this->sanitize_recurrence_fields( $data );
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'ncrw_reminders',
-			array(
-				'team_id'         => $team_id,
-				'user_id'         => $user_id,
-				'member_email'    => $member_email,
-				'title'           => sanitize_text_field( $data['title'] ?? '' ),
-				'remind_at'       => sanitize_text_field( $data['remind_at'] ?? '' ),
-				'task_link'       => esc_url_raw( $data['task_link'] ?? '' ),
-				'comments'        => sanitize_textarea_field( $data['comments'] ?? '' ),
-				'status'          => 'pending',
-				'attempts'        => 0,
-				'next_attempt_at' => null,
+			array_merge(
+				array(
+					'team_id'         => $team_id,
+					'user_id'         => $user_id,
+					'member_email'    => $member_email,
+					'title'           => sanitize_text_field( $data['title'] ?? '' ),
+					'remind_at'       => sanitize_text_field( $data['remind_at'] ?? '' ),
+					'task_link'       => esc_url_raw( $data['task_link'] ?? '' ),
+					'comments'        => sanitize_textarea_field( $data['comments'] ?? '' ),
+					'status'          => 'pending',
+					'attempts'        => 0,
+					'next_attempt_at' => null,
+				),
+				$recurrence
 			),
-			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+			array_merge( array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' ), $this->recurrence_field_formats() )
 		);
 
 		if ( false === $inserted ) {
@@ -170,7 +191,7 @@ class Reminder_Service {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $values ) );
-		return array_map( array( Reminder::class, 'from_row' ), $rows ?: array() );
+		return array_map( array( Reminder::class, 'from_row' ), $rows ? $rows : array() );
 	}
 
 	/**
@@ -295,6 +316,12 @@ class Reminder_Service {
 			$update['status'] = $status;
 			$format[]         = '%s';
 		}
+		if ( isset( $data['recurrence'] ) ) {
+			$recurrence = $this->sanitize_recurrence_fields( $data );
+			$formats    = $this->recurrence_field_formats();
+			$update     = array_merge( $update, $recurrence );
+			$format     = array_merge( $format, $formats );
+		}
 
 		if ( empty( $update ) ) {
 			return false;
@@ -310,6 +337,57 @@ class Reminder_Service {
 		);
 
 		return false !== $result;
+	}
+
+	/**
+	 * Sanitize and validate the 5 recurrence fields from raw input.
+	 *
+	 * @param array $data Raw reminder payload.
+	 * @return array
+	 */
+	private function sanitize_recurrence_fields( array $data ): array {
+		$allowed_recurrence = array( 'none', 'daily', 'weekly', 'monthly', 'custom' );
+		$allowed_end_type   = array( 'none', 'occurrences', 'date' );
+
+		$recurrence = sanitize_key( $data['recurrence'] ?? 'none' );
+		if ( ! in_array( $recurrence, $allowed_recurrence, true ) ) {
+			$recurrence = 'none';
+		}
+
+		$interval = absint( $data['recurrence_interval'] ?? 1 );
+		$interval = min( 365, max( 1, $interval ) );
+
+		$end_type = sanitize_key( $data['recurrence_end_type'] ?? 'none' );
+		if ( ! in_array( $end_type, $allowed_end_type, true ) ) {
+			$end_type = 'none';
+		}
+
+		$end_occurrences = null;
+		if ( 'occurrences' === $end_type && ! empty( $data['recurrence_end_occurrences'] ) ) {
+			$end_occurrences = max( 1, absint( $data['recurrence_end_occurrences'] ) );
+		}
+
+		$end_date = null;
+		if ( 'date' === $end_type && ! empty( $data['recurrence_end_date'] ) ) {
+			$end_date = sanitize_text_field( (string) $data['recurrence_end_date'] );
+		}
+
+		return array(
+			'recurrence'                 => $recurrence,
+			'recurrence_interval'        => $interval,
+			'recurrence_end_type'        => $end_type,
+			'recurrence_end_occurrences' => $end_occurrences,
+			'recurrence_end_date'        => $end_date,
+		);
+	}
+
+	/**
+	 * $wpdb format placeholders matching sanitize_recurrence_fields() key order.
+	 *
+	 * @return string[]
+	 */
+	private function recurrence_field_formats(): array {
+		return array( '%s', '%d', '%s', '%d', '%s' );
 	}
 
 	/**
@@ -396,7 +474,7 @@ class Reminder_Service {
 			)
 		);
 
-		return array_map( array( Reminder::class, 'from_row' ), $rows ?: array() );
+		return array_map( array( Reminder::class, 'from_row' ), $rows ? $rows : array() );
 	}
 
 	/**
@@ -425,6 +503,100 @@ class Reminder_Service {
 		);
 
 		$this->log( $reminder->team_id, $id, 'sent', __( 'Reminder sent to Slack.', 'notifycrew' ) );
+
+		if ( 'none' !== $reminder->recurrence ) {
+			$this->schedule_next_occurrence( $reminder );
+		}
+	}
+
+	/**
+	 * Create the next occurrence of a recurring reminder after it fires.
+	 *
+	 * @param Reminder $reminder The reminder that just fired.
+	 */
+	private function schedule_next_occurrence( Reminder $reminder ): void {
+		try {
+			$current = new \DateTime( $reminder->remind_at, new \DateTimeZone( 'UTC' ) );
+		} catch ( \Exception $e ) {
+			return;
+		}
+
+		$interval = max( 1, $reminder->recurrence_interval );
+		$next     = $this->recurrence_service->get_next_remind_at( $current, $reminder->recurrence, $interval );
+		if ( null === $next ) {
+			return;
+		}
+
+		$occurrence_count = $this->count_series_occurrences( $reminder );
+		$should_end       = $this->recurrence_service->should_end(
+			$occurrence_count,
+			$reminder->recurrence_end_type,
+			$reminder->recurrence_end_occurrences,
+			$reminder->recurrence_end_date
+		);
+		if ( $should_end ) {
+			return;
+		}
+
+		$new_id = $this->create(
+			array(
+				'team_id'                    => $reminder->team_id,
+				'user_id'                    => $reminder->user_id,
+				'member_email'               => $reminder->member_email,
+				'title'                      => $reminder->title,
+				'remind_at'                  => $next->format( 'Y-m-d H:i:s' ),
+				'task_link'                  => $reminder->task_link,
+				'comments'                   => $reminder->comments,
+				'recurrence'                 => $reminder->recurrence,
+				'recurrence_interval'        => $reminder->recurrence_interval,
+				'recurrence_end_type'        => $reminder->recurrence_end_type,
+				'recurrence_end_occurrences' => $reminder->recurrence_end_occurrences,
+				'recurrence_end_date'        => $reminder->recurrence_end_date,
+			)
+		);
+
+		if ( false === $new_id ) {
+			return;
+		}
+
+		$this->log(
+			$reminder->team_id,
+			(int) $new_id,
+			'auto_created',
+			sprintf(
+				/* translators: %d: source reminder ID this occurrence was auto-created from */
+				__( 'Auto-created next occurrence from reminder #%d.', 'notifycrew' ),
+				$reminder->id
+			)
+		);
+	}
+
+	/**
+	 * Count how many reminders already belong to the same recurring series.
+	 *
+	 * Reminders are matched by team, title, and recurrence settings, since the
+	 * schema does not track a dedicated parent/series identifier.
+	 *
+	 * @param Reminder $reminder Reference reminder.
+	 * @return int
+	 */
+	private function count_series_occurrences( Reminder $reminder ): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}ncrw_reminders
+				 WHERE team_id = %d AND title = %s AND recurrence = %s AND recurrence_interval = %d
+				   AND status IN ('sent','completed')",
+				$reminder->team_id,
+				$reminder->title,
+				$reminder->recurrence,
+				$reminder->recurrence_interval
+			)
+		);
+
+		return (int) $count;
 	}
 
 	/**
@@ -580,11 +752,12 @@ class Reminder_Service {
 	public function get_logs( int $reminder_id ): array {
 		global $wpdb;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return $wpdb->get_results(
+		$logs = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT * FROM {$wpdb->prefix}ncrw_logs WHERE reminder_id = %d ORDER BY created_at DESC",
 				$reminder_id
 			)
-		) ?: array();
+		);
+		return $logs ? $logs : array();
 	}
 }

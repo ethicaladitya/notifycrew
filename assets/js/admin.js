@@ -93,6 +93,35 @@
 		rebuildQuickHoursOptions();
 		syncAdminScheduleMode();
 
+		function syncRecurrenceOptions() {
+			var $recurrence = $( '#ncrw_recurrence' );
+			var $options = $( '#ncrw-recurrence-options' );
+			if ( ! $recurrence.length || ! $options.length ) {
+				return;
+			}
+
+			$options.prop( 'hidden', 'none' === $recurrence.val() );
+		}
+
+		function syncRecurrenceEndOptions() {
+			var $endType = $( '#ncrw_recurrence_end_type' );
+			var $occurrencesRow = $( '#ncrw-recurrence-end-occurrences-row' );
+			var $dateRow = $( '#ncrw-recurrence-end-date-row' );
+			if ( ! $endType.length ) {
+				return;
+			}
+
+			var value = $endType.val();
+			$occurrencesRow.prop( 'hidden', 'occurrences' !== value );
+			$dateRow.prop( 'hidden', 'date' !== value );
+		}
+
+		$( document ).on( 'change', '#ncrw_recurrence', syncRecurrenceOptions );
+		$( document ).on( 'change', '#ncrw_recurrence_end_type', syncRecurrenceEndOptions );
+
+		syncRecurrenceOptions();
+		syncRecurrenceEndOptions();
+
 		// Prevent password managers from injecting values into the webhook field.
 		var $webhookInput = $( '#ncrw_slack_webhook' );
 		if ( $webhookInput.length ) {

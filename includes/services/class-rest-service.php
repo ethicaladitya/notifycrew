@@ -33,7 +33,11 @@ class Rest_Service {
 	 */
 	private static $instance = null;
 
-	/** @return Rest_Service */
+	/**
+	 * Get the singleton instance.
+	 *
+	 * @return Rest_Service
+	 */
 	public static function get_instance(): Rest_Service {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -41,6 +45,9 @@ class Rest_Service {
 		return self::$instance;
 	}
 
+	/**
+	 * Private constructor.
+	 */
 	private function __construct() {}
 
 	/**
@@ -143,45 +150,69 @@ class Rest_Service {
 				'callback'            => array( $this, 'handle_portal_save_reminder' ),
 				'permission_callback' => '__return_true',
 				'args'                => array(
-					'id_token'          => array(
+					'id_token'                   => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 						'required'          => true,
 					),
-					'id'                => array(
+					'id'                         => array(
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
 						'default'           => 0,
 					),
-					'team_id'           => array(
+					'team_id'                    => array(
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
 						'required'          => true,
 					),
-					'title'             => array(
+					'title'                      => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 						'required'          => true,
 					),
-					'reminder_datetime' => array(
+					'reminder_datetime'          => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 						'required'          => false,
 					),
-					'quick_hours'       => array(
+					'quick_hours'                => array(
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
 						'default'           => 0,
 					),
-					'link'              => array(
+					'link'                       => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'esc_url_raw',
 						'default'           => '',
 					),
-					'comments'          => array(
+					'comments'                   => array(
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_textarea_field',
 						'default'           => '',
+					),
+					'recurrence'                 => array(
+						'type'    => 'string',
+						'default' => 'none',
+						'enum'    => array( 'none', 'daily', 'weekly', 'monthly', 'custom' ),
+					),
+					'recurrence_interval'        => array(
+						'type'    => 'integer',
+						'default' => 1,
+						'minimum' => 1,
+						'maximum' => 365,
+					),
+					'recurrence_end_type'        => array(
+						'type'    => 'string',
+						'default' => 'none',
+						'enum'    => array( 'none', 'occurrences', 'date' ),
+					),
+					'recurrence_end_occurrences' => array(
+						'type'    => 'integer',
+						'default' => null,
+					),
+					'recurrence_end_date'        => array(
+						'type'    => 'string',
+						'default' => null,
 					),
 				),
 			)
@@ -395,16 +426,24 @@ class Rest_Service {
 			return new \WP_Error( 'invalid_link', __( 'Task link must be a valid URL.', 'notifycrew' ), array( 'status' => 400 ) );
 		}
 
+		$occurrences_param = $request->get_param( 'recurrence_end_occurrences' );
+		$end_date_param    = $request->get_param( 'recurrence_end_date' );
+
 		$data = array(
-			'team_id'        => $team_id,
-			'title'          => (string) $request->get_param( 'title' ),
-			'remind_at'      => $remind_at,
-			'task_link'      => $link,
-			'comments'       => (string) $request->get_param( 'comments' ),
-			'user_id'        => $user_id,
-			'member_email'   => $email,
-			'_actor_user_id' => $user_id,
-			'_actor_email'   => $email,
+			'team_id'                    => $team_id,
+			'title'                      => (string) $request->get_param( 'title' ),
+			'remind_at'                  => $remind_at,
+			'task_link'                  => $link,
+			'comments'                   => (string) $request->get_param( 'comments' ),
+			'user_id'                    => $user_id,
+			'member_email'               => $email,
+			'_actor_user_id'             => $user_id,
+			'_actor_email'               => $email,
+			'recurrence'                 => (string) $request->get_param( 'recurrence' ),
+			'recurrence_interval'        => (int) $request->get_param( 'recurrence_interval' ),
+			'recurrence_end_type'        => (string) $request->get_param( 'recurrence_end_type' ),
+			'recurrence_end_occurrences' => null !== $occurrences_param ? (int) $occurrences_param : null,
+			'recurrence_end_date'        => ! empty( $end_date_param ) ? $this->normalize_datetime_input( (string) $end_date_param ) : null,
 		);
 
 		$service = Reminder_Service::get_instance();
@@ -558,7 +597,8 @@ class Rest_Service {
 	 * @return bool
 	 */
 	private function is_email_domain_allowed( string $email ): bool {
-		$domain = strtolower( (string) substr( strrchr( $email, '@' ) ?: '', 1 ) );
+		$at_position = strrchr( $email, '@' );
+		$domain      = strtolower( (string) substr( $at_position ? $at_position : '', 1 ) );
 		if ( '' === $domain ) {
 			return false;
 		}
@@ -639,17 +679,22 @@ class Rest_Service {
 		}
 
 		return array(
-			'id'             => (int) $reminder->id,
-			'team_id'        => (int) $reminder->team_id,
-			'title'          => (string) $reminder->title,
-			'remind_at'      => (string) $reminder->remind_at,
-			'datetime_local' => $datetime,
-			'display_time'   => $display,
-			'task_link'      => (string) $reminder->task_link,
-			'comments'       => (string) $reminder->comments,
-			'status'         => (string) $reminder->status,
-			'attempts'       => (int) $reminder->attempts,
-			'added_by'       => $added_by,
+			'id'                         => (int) $reminder->id,
+			'team_id'                    => (int) $reminder->team_id,
+			'title'                      => (string) $reminder->title,
+			'remind_at'                  => (string) $reminder->remind_at,
+			'datetime_local'             => $datetime,
+			'display_time'               => $display,
+			'task_link'                  => (string) $reminder->task_link,
+			'comments'                   => (string) $reminder->comments,
+			'status'                     => (string) $reminder->status,
+			'attempts'                   => (int) $reminder->attempts,
+			'added_by'                   => $added_by,
+			'recurrence'                 => (string) $reminder->recurrence,
+			'recurrence_interval'        => (int) $reminder->recurrence_interval,
+			'recurrence_end_type'        => (string) $reminder->recurrence_end_type,
+			'recurrence_end_occurrences' => $reminder->recurrence_end_occurrences,
+			'recurrence_end_date'        => $reminder->recurrence_end_date,
 		);
 	}
 

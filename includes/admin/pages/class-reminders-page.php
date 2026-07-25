@@ -28,7 +28,11 @@ class Reminders_Page {
 	 */
 	private static $instance = null;
 
-	/** @return Reminders_Page */
+	/**
+	 * Get the singleton instance.
+	 *
+	 * @return Reminders_Page
+	 */
 	public static function get_instance(): Reminders_Page {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -36,6 +40,9 @@ class Reminders_Page {
 		return self::$instance;
 	}
 
+	/**
+	 * Private constructor.
+	 */
 	private function __construct() {}
 
 	/**
@@ -330,17 +337,23 @@ class Reminders_Page {
 		delete_transient( 'ncrw_form_errors_' . $uid );
 
 		$v = array(
-			'team_id'     => $saved_data['team_id'] ?? ( $reminder->team_id ?? ( isset( $teams[0] ) ? $teams[0]->id : 0 ) ),
-			'title'       => $saved_data['title'] ?? ( $reminder->title ?? '' ),
-			'remind_at'   => $saved_data['remind_at'] ?? ( $reminder->remind_at ?? '' ),
-			'quick_hours' => $saved_data['quick_hours'] ?? 0,
-			'task_link'   => $saved_data['task_link'] ?? ( $reminder->task_link ?? '' ),
-			'comments'    => $saved_data['comments'] ?? ( $reminder->comments ?? '' ),
+			'team_id'                    => $saved_data['team_id'] ?? ( $reminder->team_id ?? ( isset( $teams[0] ) ? $teams[0]->id : 0 ) ),
+			'title'                      => $saved_data['title'] ?? ( $reminder->title ?? '' ),
+			'remind_at'                  => $saved_data['remind_at'] ?? ( $reminder->remind_at ?? '' ),
+			'quick_hours'                => $saved_data['quick_hours'] ?? 0,
+			'task_link'                  => $saved_data['task_link'] ?? ( $reminder->task_link ?? '' ),
+			'comments'                   => $saved_data['comments'] ?? ( $reminder->comments ?? '' ),
+			'recurrence'                 => $saved_data['recurrence'] ?? ( $reminder->recurrence ?? 'none' ),
+			'recurrence_interval'        => $saved_data['recurrence_interval'] ?? ( $reminder->recurrence_interval ?? 1 ),
+			'recurrence_end_type'        => $saved_data['recurrence_end_type'] ?? ( $reminder->recurrence_end_type ?? 'none' ),
+			'recurrence_end_occurrences' => $saved_data['recurrence_end_occurrences'] ?? ( $reminder->recurrence_end_occurrences ?? '' ),
+			'recurrence_end_date'        => $saved_data['recurrence_end_date'] ?? ( $reminder->recurrence_end_date ?? '' ),
 		);
 
 		$action           = $reminder ? 'ncrw_update_reminder' : 'ncrw_create_reminder';
 		$nonce            = $reminder ? 'ncrw_update_reminder' : 'ncrw_create_reminder';
 		$default_datetime = ! empty( $v['remind_at'] ) ? gmdate( 'Y-m-d\\TH:i', strtotime( (string) $v['remind_at'] . ' UTC' ) ) : gmdate( 'Y-m-d\\TH:i' );
+		$end_date_local   = ! empty( $v['recurrence_end_date'] ) ? gmdate( 'Y-m-d\\TH:i', strtotime( (string) $v['recurrence_end_date'] . ' UTC' ) ) : '';
 		$selected_team    = ! empty( $v['team_id'] ) ? $team_service->get( (int) $v['team_id'] ) : null;
 		$quick_hours      = $selected_team ? $team_service->get_team_quick_schedule_hours( (int) $selected_team->id ) : array( 4, 12, 48 );
 		$team_hours_map   = array();
@@ -404,6 +417,43 @@ class Reminders_Page {
 						<td>
 							<input type="datetime-local" id="ncrw_datetime" name="ncrw_reminder_datetime" value="<?php echo esc_attr( $default_datetime ); ?>"/>
 							<p class="description"><?php esc_html_e( 'Optional when using Quick Schedule; otherwise provide UTC date/time.', 'notifycrew' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="ncrw_recurrence"><?php esc_html_e( 'Repeat', 'notifycrew' ); ?></label></th>
+						<td>
+							<select id="ncrw_recurrence" name="ncrw_recurrence">
+								<option value="none" <?php selected( (string) $v['recurrence'], 'none' ); ?>><?php esc_html_e( 'Does not repeat', 'notifycrew' ); ?></option>
+								<option value="daily" <?php selected( (string) $v['recurrence'], 'daily' ); ?>><?php esc_html_e( 'Daily', 'notifycrew' ); ?></option>
+								<option value="weekly" <?php selected( (string) $v['recurrence'], 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'notifycrew' ); ?></option>
+								<option value="monthly" <?php selected( (string) $v['recurrence'], 'monthly' ); ?>><?php esc_html_e( 'Monthly', 'notifycrew' ); ?></option>
+								<option value="custom" <?php selected( (string) $v['recurrence'], 'custom' ); ?>><?php esc_html_e( 'Custom', 'notifycrew' ); ?></option>
+							</select>
+
+							<div id="ncrw-recurrence-options" <?php echo 'none' === (string) $v['recurrence'] ? 'hidden' : ''; ?>>
+								<p>
+									<label for="ncrw_recurrence_interval"><?php esc_html_e( 'Repeat every', 'notifycrew' ); ?></label>
+									<input type="number" id="ncrw_recurrence_interval" name="ncrw_recurrence_interval" min="1" max="365" value="<?php echo esc_attr( (string) $v['recurrence_interval'] ); ?>"/>
+									<?php esc_html_e( 'day(s)', 'notifycrew' ); ?>
+								</p>
+								<p>
+									<label for="ncrw_recurrence_end_type"><?php esc_html_e( 'Ends', 'notifycrew' ); ?></label>
+									<select id="ncrw_recurrence_end_type" name="ncrw_recurrence_end_type">
+										<option value="none" <?php selected( (string) $v['recurrence_end_type'], 'none' ); ?>><?php esc_html_e( 'Never', 'notifycrew' ); ?></option>
+										<option value="occurrences" <?php selected( (string) $v['recurrence_end_type'], 'occurrences' ); ?>><?php esc_html_e( 'After N occurrences', 'notifycrew' ); ?></option>
+										<option value="date" <?php selected( (string) $v['recurrence_end_type'], 'date' ); ?>><?php esc_html_e( 'On date', 'notifycrew' ); ?></option>
+									</select>
+								</p>
+								<p id="ncrw-recurrence-end-occurrences-row" <?php echo 'occurrences' === (string) $v['recurrence_end_type'] ? '' : 'hidden'; ?>>
+									<label for="ncrw_recurrence_end_occurrences"><?php esc_html_e( 'Number of occurrences', 'notifycrew' ); ?></label>
+									<input type="number" id="ncrw_recurrence_end_occurrences" name="ncrw_recurrence_end_occurrences" min="1" value="<?php echo esc_attr( (string) $v['recurrence_end_occurrences'] ); ?>"/>
+								</p>
+								<p id="ncrw-recurrence-end-date-row" <?php echo 'date' === (string) $v['recurrence_end_type'] ? '' : 'hidden'; ?>>
+									<label for="ncrw_recurrence_end_date"><?php esc_html_e( 'End date', 'notifycrew' ); ?></label>
+									<input type="datetime-local" id="ncrw_recurrence_end_date" name="ncrw_recurrence_end_date" value="<?php echo esc_attr( $end_date_local ); ?>"/>
+								</p>
+							</div>
+							<p class="description"><?php esc_html_e( 'When this reminder fires, NotifyCrew can automatically schedule the next occurrence.', 'notifycrew' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -471,14 +521,21 @@ class Reminders_Page {
 			}
 		}
 
+		$recurrence_end_date = sanitize_text_field( wp_unslash( $_POST['ncrw_recurrence_end_date'] ?? '' ) );
+
 		return array(
-			'team_id'     => $team_id,
-			'user_id'     => get_current_user_id(),
-			'title'       => sanitize_text_field( wp_unslash( $_POST['ncrw_title'] ?? '' ) ),
-			'remind_at'   => $remind_at,
-			'quick_hours' => $quick_hours,
-			'task_link'   => esc_url_raw( wp_unslash( $_POST['ncrw_link'] ?? '' ) ),
-			'comments'    => sanitize_textarea_field( wp_unslash( $_POST['ncrw_comments'] ?? '' ) ),
+			'team_id'                    => $team_id,
+			'user_id'                    => get_current_user_id(),
+			'title'                      => sanitize_text_field( wp_unslash( $_POST['ncrw_title'] ?? '' ) ),
+			'remind_at'                  => $remind_at,
+			'quick_hours'                => $quick_hours,
+			'task_link'                  => esc_url_raw( wp_unslash( $_POST['ncrw_link'] ?? '' ) ),
+			'comments'                   => sanitize_textarea_field( wp_unslash( $_POST['ncrw_comments'] ?? '' ) ),
+			'recurrence'                 => sanitize_key( wp_unslash( $_POST['ncrw_recurrence'] ?? 'none' ) ),
+			'recurrence_interval'        => absint( $_POST['ncrw_recurrence_interval'] ?? 1 ),
+			'recurrence_end_type'        => sanitize_key( wp_unslash( $_POST['ncrw_recurrence_end_type'] ?? 'none' ) ),
+			'recurrence_end_occurrences' => absint( $_POST['ncrw_recurrence_end_occurrences'] ?? 0 ),
+			'recurrence_end_date'        => '' !== $recurrence_end_date ? $this->normalize_datetime_input( $recurrence_end_date ) : '',
 		);
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
@@ -529,6 +586,23 @@ class Reminders_Page {
 		if ( ! empty( $data['task_link'] ) && ! filter_var( (string) $data['task_link'], FILTER_VALIDATE_URL ) ) {
 			$errors[] = __( 'Link must be a valid URL.', 'notifycrew' );
 		}
+
+		$recurrence = sanitize_key( $data['recurrence'] ?? 'none' );
+		if ( 'none' !== $recurrence ) {
+			$interval = absint( $data['recurrence_interval'] ?? 1 );
+			if ( $interval < 1 || $interval > 365 ) {
+				$errors[] = __( 'Repeat interval must be between 1 and 365.', 'notifycrew' );
+			}
+
+			$end_type = sanitize_key( $data['recurrence_end_type'] ?? 'none' );
+			if ( 'occurrences' === $end_type && absint( $data['recurrence_end_occurrences'] ?? 0 ) < 1 ) {
+				$errors[] = __( 'Enter how many times this reminder should repeat.', 'notifycrew' );
+			}
+			if ( 'date' === $end_type && ( empty( $data['recurrence_end_date'] ) || ! strtotime( (string) $data['recurrence_end_date'] . ' UTC' ) ) ) {
+				$errors[] = __( 'Choose a valid end date for this recurring reminder.', 'notifycrew' );
+			}
+		}
+
 		return $errors;
 	}
 

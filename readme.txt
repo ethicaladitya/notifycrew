@@ -4,7 +4,7 @@ Tags: slack, reminders, notifications, slack integration, scheduler
 Requires at least: 5.8
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -32,6 +32,7 @@ NotifyCrew closes that gap. Schedule a reminder in WordPress, pick the team it b
 * **Recover from failures automatically.** Failed deliveries retry with exponential backoff, and you get an email plus an admin notice when a reminder keeps failing.
 * **Send rich, readable messages.** Reminders arrive as Slack Block Kit messages with a header, the scheduled time, a task or ticket link, who submitted it, and any notes.
 * **Let your team file their own reminders.** Drop a shortcode on any page for a Google-authenticated portal, restricted to the email domains you allow.
+* **Set it and forget it.** Make any reminder repeat daily, weekly, or monthly. NotifyCrew auto-creates the next occurrence so standups, deadlines, and check-ins keep running.
 * **Keep a full audit trail.** Every reminder event is logged with a timestamp, so you can always answer "was this actually sent?"
 * **Uninstall cleanly, or not at all.** Your data is never deleted unless you explicitly opt in under Settings.
 
@@ -91,7 +92,7 @@ No. Members can be added by email address alone. If you enable the frontend port
 
 = Can reminders repeat automatically? =
 
-Not in this version. Each reminder is scheduled for a specific date and time. Recurring schedules are planned for a future release.
+Yes. Set any reminder to repeat daily, weekly, monthly, or on a custom interval. Choose how long to repeat — forever, after a set number of times, or until a specific date. When a recurring reminder fires, NotifyCrew auto-creates the next occurrence so you never have to set it up again.
 
 = How does the retry logic work? =
 
@@ -152,10 +153,18 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 
 == Changelog ==
 
+= 1.1.0 =
+* New: Recurring reminders — daily, weekly, monthly, and custom intervals
+* New: End conditions — stop after N occurrences or on a specific date
+* Improved: Auto-reschedule creates the next occurrence when a recurring reminder fires
+
 = 1.0.0 =
 * Initial release of NotifyCrew.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds recurring reminders. Existing one-time reminders are unaffected.
 
 = 1.0.0 =
 Initial release.

@@ -203,6 +203,30 @@ window.ncrwOnViewCallback = function (response) {
 		syncScheduleInputMode();
 	}
 
+	function syncRecurrenceOptions() {
+		var recurrence = byId('ncrw_front_recurrence');
+		var options = byId('ncrw-front-recurrence-options');
+		if (!recurrence || !options) {
+			return;
+		}
+		options.hidden = 'none' === recurrence.value;
+	}
+
+	function syncRecurrenceEndOptions() {
+		var endType = byId('ncrw_front_recurrence_end_type');
+		var occurrencesRow = byId('ncrw-front-recurrence-end-occurrences');
+		var dateRow = byId('ncrw-front-recurrence-end-date');
+		if (!endType) {
+			return;
+		}
+		if (occurrencesRow) {
+			occurrencesRow.hidden = 'occurrences' !== endType.value;
+		}
+		if (dateRow) {
+			dateRow.hidden = 'date' !== endType.value;
+		}
+	}
+
 	function syncScheduleInputMode() {
 		var quick = byId('ncrw_front_quick_hours');
 		var datetime = byId('ncrw_front_datetime');
@@ -289,6 +313,23 @@ window.ncrwOnViewCallback = function (response) {
 		byId('ncrw_front_datetime').value = item.datetime_local || '';
 		byId('ncrw_front_link').value = item.task_link || '';
 		byId('ncrw_front_comments').value = item.comments || '';
+		if (byId('ncrw_front_recurrence')) {
+			byId('ncrw_front_recurrence').value = item.recurrence || 'none';
+		}
+		if (byId('ncrw_front_recurrence_interval')) {
+			byId('ncrw_front_recurrence_interval').value = String(item.recurrence_interval || 1);
+		}
+		if (byId('ncrw_front_recurrence_end_type')) {
+			byId('ncrw_front_recurrence_end_type').value = item.recurrence_end_type || 'none';
+		}
+		if (byId('ncrw_front_recurrence_end_occurrences')) {
+			byId('ncrw_front_recurrence_end_occurrences').value = item.recurrence_end_occurrences ? String(item.recurrence_end_occurrences) : '';
+		}
+		if (byId('ncrw_front_recurrence_end_date')) {
+			byId('ncrw_front_recurrence_end_date').value = item.recurrence_end_date_local || '';
+		}
+		syncRecurrenceOptions();
+		syncRecurrenceEndOptions();
 		byId('ncrw-form-title').textContent = ncrwFrontend.i18n.editTitle;
 		byId('ncrw-front-cancel').hidden = false;
 		window.scrollTo({ top: byId('ncrw-reminder-form').offsetTop - 80, behavior: 'smooth' });
@@ -304,6 +345,8 @@ window.ncrwOnViewCallback = function (response) {
 			byId('ncrw_front_quick_hours').value = '0';
 		}
 		syncScheduleInputMode();
+		syncRecurrenceOptions();
+		syncRecurrenceEndOptions();
 		byId('ncrw_google_id_token').value = state.token;
 		byId('ncrw-form-title').textContent = ncrwFrontend.i18n.createTitle;
 		byId('ncrw-front-cancel').hidden = true;
@@ -356,6 +399,8 @@ window.ncrwOnViewCallback = function (response) {
 		var signOut = byId('ncrw-sign-out');
 		var teamSelect = byId('ncrw_front_team_id');
 		var quickSelect = byId('ncrw_front_quick_hours');
+		var recurrenceSelect = byId('ncrw_front_recurrence');
+		var recurrenceEndTypeSelect = byId('ncrw_front_recurrence_end_type');
 
 		// --- filter tabs ---
 		var statusTabs = document.querySelectorAll('#ncrw-main-status-tabs .ncrw-tab');
@@ -406,7 +451,12 @@ window.ncrwOnViewCallback = function (response) {
 					ncrw_title: byId('ncrw_front_title').value,
 					ncrw_reminder_datetime: byId('ncrw_front_datetime').value,
 					ncrw_link: byId('ncrw_front_link').value,
-					ncrw_comments: byId('ncrw_front_comments').value
+					ncrw_comments: byId('ncrw_front_comments').value,
+					ncrw_recurrence: byId('ncrw_front_recurrence') ? byId('ncrw_front_recurrence').value : 'none',
+					ncrw_recurrence_interval: byId('ncrw_front_recurrence_interval') ? byId('ncrw_front_recurrence_interval').value : '1',
+					ncrw_recurrence_end_type: byId('ncrw_front_recurrence_end_type') ? byId('ncrw_front_recurrence_end_type').value : 'none',
+					ncrw_recurrence_end_occurrences: byId('ncrw_front_recurrence_end_occurrences') ? byId('ncrw_front_recurrence_end_occurrences').value : '',
+					ncrw_recurrence_end_date: byId('ncrw_front_recurrence_end_date') ? byId('ncrw_front_recurrence_end_date').value : ''
 				};
 
 				apiPost('ncrw_frontend_save_reminder', payload)
@@ -461,6 +511,18 @@ window.ncrwOnViewCallback = function (response) {
 		if (quickSelect) {
 			quickSelect.addEventListener('change', function () {
 				syncScheduleInputMode();
+			});
+		}
+
+		if (recurrenceSelect) {
+			recurrenceSelect.addEventListener('change', function () {
+				syncRecurrenceOptions();
+			});
+		}
+
+		if (recurrenceEndTypeSelect) {
+			recurrenceEndTypeSelect.addEventListener('change', function () {
+				syncRecurrenceEndOptions();
 			});
 		}
 
