@@ -127,12 +127,10 @@ Yes. Every user-facing string uses WordPress i18n functions with the `notifycrew
 
 == Screenshots ==
 
-1. A reminder as your team sees it in Slack, with the scheduled time, task link, and submitter.
-2. The Reminders list, filterable by team and status, with retry and delivery details.
-3. Scheduling a reminder using quick-schedule presets and a team selector.
-4. Team management with per-team Slack channel, mention tag, and schedule presets.
-5. The Google-authenticated frontend portal your team uses to file their own reminders.
-6. Settings, including encrypted Slack credentials and portal configuration.
+1. The reminders admin list, filterable by team and status, with retry and delivery details.
+2. Creating a reminder with team selector and quick-schedule presets.
+3. Team management — Slack channel, mention tags, and member assignments.
+4. Settings page — encrypted Slack credentials, Google OAuth, and portal configuration.
 
 == External services ==
 
