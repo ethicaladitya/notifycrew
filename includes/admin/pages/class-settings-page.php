@@ -188,7 +188,7 @@ class Settings_Page {
 		$options   = get_option( self::OPTION_NAME, array() );
 		$client_id = isset( $options['frontend_google_client_id'] ) ? (string) $options['frontend_google_client_id'] : '';
 		?>
-		<input type="text" class="regular-text" name="<?php echo esc_attr( self::OPTION_NAME . '[frontend_google_client_id]' ); ?>" value="<?php echo esc_attr( $client_id ); ?>" placeholder="1234567890-abcxyz.apps.googleusercontent.com"/>
+		<input type="text" class="regular-text" name="<?php echo esc_attr( self::OPTION_NAME . '[frontend_google_client_id]' ); ?>" value="<?php echo esc_attr( $client_id ); ?>" placeholder="paste-your-google-client-id"/>
 		<p class="description"><?php esc_html_e( 'Required for Google Sign-In token validation.', 'notifycrew' ); ?></p>
 		<?php
 	}

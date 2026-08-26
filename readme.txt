@@ -2,9 +2,9 @@
 Contributors: ethicaladitya
 Tags: slack, reminders, notifications, slack integration, scheduler
 Requires at least: 5.8
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,9 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 
 == Changelog ==
 
+= 1.1.1 =
+* Tested with WordPress 7.1.
+
 = 1.1.0 =
 * New: Recurring reminders — daily, weekly, monthly, and custom intervals
 * New: End conditions — stop after N occurrences or on a specific date
@@ -162,6 +165,9 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 * Initial release of NotifyCrew.
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+Maintenance release — tested with WordPress 7.1.
 
 = 1.1.0 =
 Adds recurring reminders. Existing one-time reminders are unaffected.
