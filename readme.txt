@@ -154,7 +154,7 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 == Changelog ==
 
 = 1.1.2 =
-* Fix: NotifyCrew no longer crashes on PHP 7.4. Version 1.1.0 and 1.1.1 used a PHP 8-only feature, so sites on PHP 7.4 hit a fatal error as soon as a reminder or team was loaded.
+* Fix: NotifyCrew no longer crashes on PHP 7.4. Every earlier version used a PHP 8-only feature, so sites on PHP 7.4 hit a fatal error as soon as a reminder or team was loaded.
 * Fix: a recurring reminder now keeps repeating when one occurrence fails to reach Slack. Before, a short Slack outage or an expired token ended the whole series.
 * Release builds now package only the plugin's own files.
 
