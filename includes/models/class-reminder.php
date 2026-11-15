@@ -144,7 +144,7 @@ class Reminder {
 	 * @param \stdClass $row Raw database row.
 	 * @return static
 	 */
-	public static function from_row( \stdClass $row ): static {
+	public static function from_row( \stdClass $row ): self {
 		$instance                             = new static();
 		$instance->id                         = (int) $row->id;
 		$instance->team_id                    = (int) $row->team_id;

@@ -47,7 +47,7 @@ class Team {
 	 * @param \stdClass $row DB row.
 	 * @return static
 	 */
-	public static function from_row( \stdClass $row ): static {
+	public static function from_row( \stdClass $row ): self {
 		$instance                       = new static();
 		$instance->id                   = (int) $row->id;
 		$instance->name                 = (string) $row->name;

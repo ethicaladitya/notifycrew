@@ -629,6 +629,11 @@ class Reminder_Service {
 			);
 
 			$this->log( $reminder->team_id, $id, 'completed', __( 'Max attempts reached. Marked completed.', 'notifycrew' ) );
+
+			// A failed occurrence must not end a recurring series: queue the next one as if it had been sent.
+			if ( 'none' !== $reminder->recurrence ) {
+				$this->schedule_next_occurrence( $reminder );
+			}
 			return;
 		}
 

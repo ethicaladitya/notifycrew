@@ -4,7 +4,7 @@ Tags: slack, reminders, notifications, slack integration, scheduler
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,11 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 
 == Changelog ==
 
+= 1.1.2 =
+* Fix: NotifyCrew no longer crashes on PHP 7.4. Version 1.1.0 and 1.1.1 used a PHP 8-only feature, so sites on PHP 7.4 hit a fatal error as soon as a reminder or team was loaded.
+* Fix: a recurring reminder now keeps repeating when one occurrence fails to reach Slack. Before, a short Slack outage or an expired token ended the whole series.
+* Release builds now package only the plugin's own files.
+
 = 1.1.1 =
 * Tested with WordPress 7.1.
 
@@ -165,6 +170,9 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 * Initial release of NotifyCrew.
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+Fixes a fatal error on PHP 7.4 and recurring reminders that stopped after one failed delivery. Recommended for everyone.
 
 = 1.1.1 =
 Maintenance release — tested with WordPress 7.1.

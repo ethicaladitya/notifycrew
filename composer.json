@@ -2,8 +2,10 @@
     "require-dev": {
         "squizlabs/php_codesniffer": "*",
         "wp-coding-standards/wpcs": "*",
-        "phpcompatibility/phpcompatibility-wp": "*",
-        "dealerdirect/phpcodesniffer-composer-installer": "*"
+        "phpcompatibility/phpcompatibility-wp": "3.0.0-alpha2",
+        "dealerdirect/phpcodesniffer-composer-installer": "*",
+        "phpcompatibility/php-compatibility": "10.0.0-alpha2",
+        "phpcompatibility/phpcompatibility-paragonie": "2.0.0-alpha2"
     },
     "config": {
         "allow-plugins": {

@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<ruleset name="NotifyCrew">
+	<description>Release gate for NotifyCrew: WordPress coding standards and PHP 7.4+ compatibility.</description>
+	<file>notifycrew.php</file>
+	<file>uninstall.php</file>
+	<file>includes</file>
+	<arg name="extensions" value="php"/>
+	<arg value="sp"/>
+	<config name="testVersion" value="7.4-"/>
+	<config name="minimum_wp_version" value="5.8"/>
+	<!-- Warnings are reported but do not fail the release gate; errors do. -->
+	<config name="ignore_warnings_on_exit" value="1"/>
+	<rule ref="PHPCompatibilityWP"/>
+	<rule ref="WordPress-Extra">
+		<!-- Style only: `$x ?: array()` is valid on PHP 7.4 and used deliberately. -->
+		<exclude name="Universal.Operators.DisallowShortTernary"/>
+	</rule>
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="notifycrew"/>
+			</property>
+		</properties>
+	</rule>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="ncrw"/>
+				<element value="NCRW"/>
+				<element value="Aditya\NotifyCrew"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

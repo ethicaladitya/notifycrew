@@ -1,0 +1,9 @@
+# Files and folders that ship to wordpress.org (one per line). Used by build_distribution_zip.sh and
+# ~/dev/personal/aditya-hermes-setup/ops/notifycrew_release.sh. Only committed files are packaged (git archive),
+# so anything not listed here (frontend-app/, .hermes/, vendor/, tests, dev configs) can never ship.
+notifycrew.php
+uninstall.php
+readme.txt
+includes
+assets
+languages
