@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Aditya\NotifyCrew\Models\Reminder;
 use Aditya\NotifyCrew\Models\Team;
+use Aditya\NotifyCrew\Time;
 
 /**
  * Class Rest_Service
@@ -639,19 +640,7 @@ class Rest_Service {
 	 * @return string
 	 */
 	private function normalize_datetime_input( string $value ): string {
-		$value = trim( $value );
-
-		$utc = \DateTime::createFromFormat( 'Y-m-d\\TH:i', $value, new \DateTimeZone( 'UTC' ) );
-		if ( $utc instanceof \DateTime ) {
-			return $utc->format( 'Y-m-d H:i:s' );
-		}
-
-		$timestamp = strtotime( $value . ' UTC' );
-		if ( false === $timestamp ) {
-			return $value;
-		}
-
-		return gmdate( 'Y-m-d H:i:s', $timestamp );
+		return Time::local_input_to_utc( $value );
 	}
 
 	/**
@@ -661,9 +650,8 @@ class Rest_Service {
 	 * @return array
 	 */
 	private function serialize_reminder( Reminder $reminder ): array {
-		$timestamp = strtotime( (string) $reminder->remind_at . ' UTC' );
-		$datetime  = $timestamp ? gmdate( 'Y-m-d\\TH:i', $timestamp ) : '';
-		$display   = $timestamp ? gmdate( 'Y-m-d H:i:s', $timestamp ) . ' UTC' : (string) $reminder->remind_at;
+		$datetime = Time::utc_to_local_input( (string) $reminder->remind_at );
+		$display  = Time::display( (string) $reminder->remind_at );
 
 		$added_by = '';
 		if ( $reminder->user_id > 0 ) {

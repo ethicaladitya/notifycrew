@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Aditya\NotifyCrew\Models\Reminder;
+use Aditya\NotifyCrew\Time;
 
 /**
  * Class Slack_Service
@@ -309,7 +310,10 @@ class Slack_Service {
 	 * @return array
 	 */
 	private function build_payload( Reminder $reminder, string $channel, string $mention_tag = '' ): array {
-		$date        = gmdate( 'Y-m-d H:i:s', strtotime( $reminder->remind_at . ' UTC' ) ) . ' UTC';
+		// Slack renders <!date^…> in each reader's own timezone; the fallback shows the site timezone.
+		$timestamp   = Time::utc_to_timestamp( (string) $reminder->remind_at );
+		$fallback    = str_replace( array( '|', '<', '>' ), ' ', Time::display( (string) $reminder->remind_at ) );
+		$date        = null !== $timestamp ? sprintf( '<!date^%d^{date_short_pretty} at {time}|%s>', $timestamp, $fallback ) : $fallback;
 		$text_prefix = '' !== $mention_tag ? $mention_tag . ' ' : '';
 
 		$fields = array(

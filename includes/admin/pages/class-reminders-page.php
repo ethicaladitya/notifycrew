@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Aditya\NotifyCrew\Services\Reminder_Service;
 use Aditya\NotifyCrew\Services\Team_Service;
 use Aditya\NotifyCrew\Services\Cron_Service;
+use Aditya\NotifyCrew\Time;
 
 /**
  * Class Reminders_Page
@@ -247,7 +248,7 @@ class Reminders_Page {
 									<?php endif; ?>
 								</td>
 								<td><?php echo esc_html( $team ? $team->name : '—' ); ?></td>
-								<td><?php echo esc_html( gmdate( 'Y-m-d H:i:s', strtotime( $reminder->remind_at . ' UTC' ) ) . ' UTC' ); ?></td>
+								<td><?php echo esc_html( Time::display( $reminder->remind_at ) ); ?></td>
 								<td><span class="ncrw-status ncrw-status--<?php echo esc_attr( $reminder->status ); ?>"><?php echo esc_html( ucfirst( $reminder->status ) ); ?></span></td>
 								<td>
 									<?php echo esc_html( (int) $reminder->attempts ); ?>/<?php echo esc_html( (int) Reminder_Service::MAX_ATTEMPTS ); ?>
@@ -352,8 +353,8 @@ class Reminders_Page {
 
 		$action           = $reminder ? 'ncrw_update_reminder' : 'ncrw_create_reminder';
 		$nonce            = $reminder ? 'ncrw_update_reminder' : 'ncrw_create_reminder';
-		$default_datetime = ! empty( $v['remind_at'] ) ? gmdate( 'Y-m-d\\TH:i', strtotime( (string) $v['remind_at'] . ' UTC' ) ) : gmdate( 'Y-m-d\\TH:i' );
-		$end_date_local   = ! empty( $v['recurrence_end_date'] ) ? gmdate( 'Y-m-d\\TH:i', strtotime( (string) $v['recurrence_end_date'] . ' UTC' ) ) : '';
+		$default_datetime = ! empty( $v['remind_at'] ) ? Time::utc_to_local_input( (string) $v['remind_at'] ) : Time::now_local_input();
+		$end_date_local   = ! empty( $v['recurrence_end_date'] ) ? Time::utc_to_local_input( (string) $v['recurrence_end_date'] ) : '';
 		$selected_team    = ! empty( $v['team_id'] ) ? $team_service->get( (int) $v['team_id'] ) : null;
 		$quick_hours      = $selected_team ? $team_service->get_team_quick_schedule_hours( (int) $selected_team->id ) : array( 4, 12, 48 );
 		$team_hours_map   = array();
@@ -409,14 +410,24 @@ class Reminders_Page {
 									</option>
 								<?php endforeach; ?>
 							</select>
-							<p class="description"><?php esc_html_e( 'Uses team-configured hour options and auto-calculates reminder time in UTC.', 'notifycrew' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Uses team-configured hour options and calculates the reminder time from now.', 'notifycrew' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="ncrw_datetime"><?php esc_html_e( 'Scheduled Date & Time', 'notifycrew' ); ?> <span class="required">*</span></label></th>
 						<td>
 							<input type="datetime-local" id="ncrw_datetime" name="ncrw_reminder_datetime" value="<?php echo esc_attr( $default_datetime ); ?>"/>
-							<p class="description"><?php esc_html_e( 'Optional when using Quick Schedule; otherwise provide UTC date/time.', 'notifycrew' ); ?></p>
+							<p class="description">
+								<?php
+								echo esc_html(
+									sprintf(
+										/* translators: %s: site timezone name, e.g. Asia/Kolkata */
+										__( 'Optional when using Quick Schedule. Times are in the site timezone (%s), set under Settings > General.', 'notifycrew' ),
+										Time::site_timezone_label()
+									)
+								);
+								?>
+							</p>
 						</td>
 					</tr>
 					<tr>
@@ -547,19 +558,7 @@ class Reminders_Page {
 	 * @return string
 	 */
 	private function normalize_datetime_input( string $value ): string {
-		$value = trim( $value );
-
-		$utc = \DateTime::createFromFormat( 'Y-m-d\TH:i', $value, new \DateTimeZone( 'UTC' ) );
-		if ( $utc instanceof \DateTime ) {
-			return $utc->format( 'Y-m-d H:i:s' );
-		}
-
-		$timestamp = strtotime( $value . ' UTC' );
-		if ( false === $timestamp ) {
-			return $value;
-		}
-
-		return gmdate( 'Y-m-d H:i:s', $timestamp );
+		return Time::local_input_to_utc( $value );
 	}
 
 	/**
