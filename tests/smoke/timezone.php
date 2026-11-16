@@ -8,6 +8,9 @@ global $wpdb;
 wp_set_current_user( 1 );
 $old_tz     = get_option( 'timezone_string' );
 $old_offset = get_option( 'gmt_offset' );
+$old_opts   = get_option( 'ncrw_options', array() );
+// Start from "same as site": NotifyCrew's own timezone setting (1.2.0) would override everything below.
+update_option( 'ncrw_options', array_merge( (array) $old_opts, array( 'timezone' => '' ) ) );
 $fail       = 0;
 $check      = function ( $label, $ok, $got = '' ) use ( &$fail ) {
 	echo ( $ok ? 'PASS' : 'FAIL' ) . ": $label" . ( $ok ? '' : " (got: $got)" ) . "\n";
@@ -47,7 +50,6 @@ $ts = strtotime( '2026-03-07 15:00:00 UTC' );
 $check( 'Slack message carries a <!date> token', false !== strpos( $body, '<!date^' . $ts . '^' ), substr( $body, 0, 300 ) );
 
 // NotifyCrew's own timezone setting overrides the site's (1.2.0).
-$old_opts = get_option( 'ncrw_options', array() );
 update_option( 'timezone_string', 'Asia/Kolkata' );
 update_option( 'ncrw_options', array_merge( (array) $old_opts, array( 'timezone' => 'Europe/London' ) ) );
 $check( 'plugin timezone used for input (London 10:00 in winter = 10:00 UTC)', '2026-11-16 10:00:00' === Time::local_input_to_utc( '2026-11-16T10:00' ), Time::local_input_to_utc( '2026-11-16T10:00' ) );
