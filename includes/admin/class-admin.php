@@ -77,7 +77,7 @@ class Admin {
 		$settings_url = add_query_arg( 'page', 'ncrw-settings', admin_url( 'admin.php' ) );
 		printf(
 			'<div class="notice notice-error"><p><strong>%s</strong> %s &mdash; <em>%s</em> &mdash; <a href="%s">%s</a></p></div>',
-			esc_html__( 'Reminder Manager:', 'notifycrew' ),
+			esc_html__( 'NotifyCrew:', 'notifycrew' ),
 			esc_html__( 'Recent Slack delivery failures detected.', 'notifycrew' ),
 			esc_html( $recent_failure->message ),
 			esc_url( $settings_url ),

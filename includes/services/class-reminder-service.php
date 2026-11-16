@@ -690,7 +690,7 @@ class Reminder_Service {
 		$reminders_url = add_query_arg( 'page', 'ncrw-reminders', admin_url( 'admin.php' ) );
 
 		/* translators: %s: site name */
-		$subject = sprintf( __( '[%s] Reminder Manager: Slack delivery failing', 'notifycrew' ), $site_name );
+		$subject = sprintf( __( '[%s] NotifyCrew: Slack delivery failing', 'notifycrew' ), $site_name );
 
 		$body = sprintf(
 			/* translators: 1: reminder title, 2: reminder id, 3: attempts, 4: max, 5: error, 6: reminders url, 7: settings url */
