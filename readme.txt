@@ -4,7 +4,7 @@ Tags: slack, reminders, notifications, slack integration, scheduler
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -153,6 +153,14 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 
 == Changelog ==
 
+= 1.1.3 =
+* Fix: reminder times now use your site's timezone (Settings > General). Before, every time you typed was read as UTC, so a 10:00 reminder in India went out at 15:30.
+* Times in the admin, the team portal and the REST API are shown in the site timezone, with its name next to them.
+* Slack shows each reader the reminder time in their own timezone.
+* Daily, weekly and monthly reminders keep the same local time when daylight saving time starts or ends.
+* Reminders you created before this update keep the moment you set them for; they are now shown in your site timezone.
+* The failure notice and the failure email now say NotifyCrew instead of the old plugin name.
+
 = 1.1.2 =
 * Fix: NotifyCrew no longer crashes on PHP 7.4. Every earlier version used a PHP 8-only feature, so sites on PHP 7.4 hit a fatal error as soon as a reminder or team was loaded.
 * Fix: a recurring reminder now keeps repeating when one occurrence fails to reach Slack. Before, a short Slack outage or an expired token ended the whole series.
@@ -170,6 +178,9 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 * Initial release of NotifyCrew.
 
 == Upgrade Notice ==
+
+= 1.1.3 =
+Reminder times now follow your site's timezone instead of UTC. Check the time on your existing reminders after updating.
 
 = 1.1.2 =
 Fixes a fatal error on PHP 7.4 and recurring reminders that stopped after one failed delivery. Recommended for everyone.
