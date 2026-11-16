@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Aditya\NotifyCrew\Models\Team;
+use Aditya\NotifyCrew\Time;
 
 /**
  * Class Frontend_Service
@@ -88,7 +89,7 @@ class Frontend_Service {
 		}
 
 		$this->enqueue_assets( $client_id );
-		$default_datetime = gmdate( 'Y-m-d\TH:i' );
+		$default_datetime = Time::now_local_input();
 
 		ob_start();
 		?>
@@ -160,6 +161,17 @@ class Frontend_Service {
 									<option value="0"><?php esc_html_e( 'Custom date & time', 'notifycrew' ); ?></option>
 								</select>
 								<input type="datetime-local" id="ncrw_front_datetime" name="ncrw_reminder_datetime" value="<?php echo esc_attr( $default_datetime ); ?>"/>
+								<p class="ncrw-front-hint">
+									<?php
+									echo esc_html(
+										sprintf(
+											/* translators: %s: site timezone name, e.g. Asia/Kolkata */
+											__( 'Times are in %s.', 'notifycrew' ),
+											Time::site_timezone_label()
+										)
+									);
+									?>
+								</p>
 
 								<label for="ncrw_front_recurrence"><?php esc_html_e( 'Repeat', 'notifycrew' ); ?></label>
 								<select id="ncrw_front_recurrence" name="ncrw_recurrence">
@@ -654,9 +666,8 @@ class Frontend_Service {
 	 * @return array
 	 */
 	private function serialize_reminder( $reminder ): array {
-		$timestamp = strtotime( (string) $reminder->remind_at . ' UTC' );
-		$datetime  = $timestamp ? gmdate( 'Y-m-d\TH:i', $timestamp ) : '';
-		$display   = $timestamp ? gmdate( 'Y-m-d H:i:s', $timestamp ) . ' UTC' : (string) $reminder->remind_at;
+		$datetime = Time::utc_to_local_input( (string) $reminder->remind_at );
+		$display  = Time::display( (string) $reminder->remind_at );
 
 		$added_by = '';
 		if ( $reminder->user_id > 0 ) {
@@ -671,8 +682,7 @@ class Frontend_Service {
 			$added_by = $reminder->member_email;
 		}
 
-		$recurrence_end_ts    = $reminder->recurrence_end_date ? strtotime( (string) $reminder->recurrence_end_date . ' UTC' ) : false;
-		$recurrence_end_local = $recurrence_end_ts ? gmdate( 'Y-m-d\TH:i', $recurrence_end_ts ) : '';
+		$recurrence_end_local = $reminder->recurrence_end_date ? Time::utc_to_local_input( (string) $reminder->recurrence_end_date ) : '';
 
 		return array(
 			'id'                         => (int) $reminder->id,
@@ -762,12 +772,11 @@ class Frontend_Service {
 	 * @return array
 	 */
 	private function serialize_reminder_view( $reminder ): array {
-		$remind_ts      = strtotime( (string) $reminder->remind_at . ' UTC' );
-		$datetime_local = $remind_ts ? gmdate( 'Y-m-d\TH:i', $remind_ts ) : '';
-		$display_time   = $remind_ts ? gmdate( 'M j, Y · g:i A', $remind_ts ) . ' UTC' : (string) $reminder->remind_at;
+		$datetime_local = Time::utc_to_local_input( (string) $reminder->remind_at );
+		$display_time   = Time::display( (string) $reminder->remind_at, 'M j, Y · g:i A' );
 
-		$created_ts      = strtotime( (string) $reminder->created_at . ' UTC' );
-		$created_display = $created_ts ? gmdate( 'M j, Y', $created_ts ) : (string) $reminder->created_at;
+		$created_ts      = Time::utc_to_timestamp( (string) $reminder->created_at );
+		$created_display = null !== $created_ts ? wp_date( 'M j, Y', $created_ts ) : (string) $reminder->created_at;
 
 		return array(
 			'id'              => (int) $reminder->id,
@@ -975,19 +984,7 @@ class Frontend_Service {
 	 * @return string
 	 */
 	private function normalize_datetime_input( string $value ): string {
-		$value = trim( $value );
-
-		$utc = \DateTime::createFromFormat( 'Y-m-d\TH:i', $value, new \DateTimeZone( 'UTC' ) );
-		if ( $utc instanceof \DateTime ) {
-			return $utc->format( 'Y-m-d H:i:s' );
-		}
-
-		$timestamp = strtotime( $value . ' UTC' );
-		if ( false === $timestamp ) {
-			return $value;
-		}
-
-		return gmdate( 'Y-m-d H:i:s', $timestamp );
+		return Time::local_input_to_utc( $value );
 	}
 
 	/**

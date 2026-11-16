@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Aditya\NotifyCrew\Models\Reminder;
+use Aditya\NotifyCrew\Time;
 
 /**
  * Class Reminder_Service
@@ -515,9 +516,9 @@ class Reminder_Service {
 	 * @param Reminder $reminder The reminder that just fired.
 	 */
 	private function schedule_next_occurrence( Reminder $reminder ): void {
-		try {
-			$current = new \DateTime( $reminder->remind_at, new \DateTimeZone( 'UTC' ) );
-		} catch ( \Exception $e ) {
+		// Step through the calendar in the site timezone so a 10:00 reminder stays at 10:00 across DST changes.
+		$current = Time::utc_to_site_datetime( (string) $reminder->remind_at );
+		if ( null === $current ) {
 			return;
 		}
 
@@ -526,6 +527,7 @@ class Reminder_Service {
 		if ( null === $next ) {
 			return;
 		}
+		$next->setTimezone( new \DateTimeZone( 'UTC' ) );
 
 		$occurrence_count = $this->count_series_occurrences( $reminder );
 		$should_end       = $this->recurrence_service->should_end(
@@ -688,7 +690,7 @@ class Reminder_Service {
 		$reminders_url = add_query_arg( 'page', 'ncrw-reminders', admin_url( 'admin.php' ) );
 
 		/* translators: %s: site name */
-		$subject = sprintf( __( '[%s] Reminder Manager: Slack delivery failing', 'notifycrew' ), $site_name );
+		$subject = sprintf( __( '[%s] NotifyCrew: Slack delivery failing', 'notifycrew' ), $site_name );
 
 		$body = sprintf(
 			/* translators: 1: reminder title, 2: reminder id, 3: attempts, 4: max, 5: error, 6: reminders url, 7: settings url */
