@@ -247,10 +247,9 @@ class Rest_Service {
 	/**
 	 * Trigger processing.
 	 *
-	 * @param \WP_REST_Request $request Request.
 	 * @return \WP_REST_Response
 	 */
-	public function handle_process( \WP_REST_Request $request ): \WP_REST_Response {
+	public function handle_process(): \WP_REST_Response {
 		Cron_Service::get_instance()->process();
 		return new \WP_REST_Response(
 			array(
