@@ -46,6 +46,21 @@ $check( 'next occurrence is 10:00 EDT (14:00 UTC) after DST starts', '2026-03-08
 $ts = strtotime( '2026-03-07 15:00:00 UTC' );
 $check( 'Slack message carries a <!date> token', false !== strpos( $body, '<!date^' . $ts . '^' ), substr( $body, 0, 300 ) );
 
+// NotifyCrew's own timezone setting overrides the site's (1.2.0).
+$old_opts = get_option( 'ncrw_options', array() );
+update_option( 'timezone_string', 'Asia/Kolkata' );
+update_option( 'ncrw_options', array_merge( (array) $old_opts, array( 'timezone' => 'Europe/London' ) ) );
+$check( 'plugin timezone used for input (London 10:00 in winter = 10:00 UTC)', '2026-11-16 10:00:00' === Time::local_input_to_utc( '2026-11-16T10:00' ), Time::local_input_to_utc( '2026-11-16T10:00' ) );
+$check( 'plugin timezone used for display', false !== strpos( Time::display( '2026-07-01 09:00:00', 'H:i' ), '10:00' ), Time::display( '2026-07-01 09:00:00', 'H:i' ) );
+$check( 'label names the plugin timezone', 'Europe/London' === Time::site_timezone_label(), Time::site_timezone_label() );
+update_option( 'ncrw_options', array_merge( (array) $old_opts, array( 'timezone' => 'UTC+5.5' ) ) );
+$check( 'manual offset UTC+5.5 works', '2026-11-16 04:30:00' === Time::local_input_to_utc( '2026-11-16T10:00' ), Time::local_input_to_utc( '2026-11-16T10:00' ) );
+$check( 'setting validation keeps zones and offsets', 'Europe/London' === Time::sanitize_setting( 'Europe/London' ) && 'UTC-8' === Time::sanitize_setting( 'UTC-8' ) && '' === Time::sanitize_setting( 'Mars/Olympus' ) && '' === Time::sanitize_setting( 'UTC+99' ) );
+update_option( 'ncrw_options', array_merge( (array) $old_opts, array( 'timezone' => '' ) ) );
+$check( 'empty setting follows the site again', '2026-11-16 04:30:00' === Time::local_input_to_utc( '2026-11-16T10:00' ), Time::local_input_to_utc( '2026-11-16T10:00' ) );
+$check( 'display does not double a zone the format already has', 1 === substr_count( Time::display( '2026-11-16 04:30:00', 'H:i T' ), 'IST' ), Time::display( '2026-11-16 04:30:00', 'H:i T' ) );
+update_option( 'ncrw_options', $old_opts );
+
 update_option( 'timezone_string', $old_tz );
 update_option( 'gmt_offset', $old_offset );
 $wpdb->query( "DELETE FROM {$wpdb->prefix}ncrw_reminders" );

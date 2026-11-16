@@ -1,14 +1,14 @@
-=== NotifyCrew - Team reminders for Slack ===
+=== NotifyCrew - Team reminders and site alerts for Slack ===
 Contributors: ethicaladitya
 Tags: slack, reminders, notifications, slack integration, scheduler
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.1.3
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Schedule team reminders in WordPress and send them to Slack automatically, with per-team channels, automatic retry, and an optional team portal.
+Team reminders and site alerts for Slack: scheduled reminders per team, and a message when updates are due, fail, or a plugin crashes.
 
 == Description ==
 
@@ -36,6 +36,16 @@ NotifyCrew closes that gap. Schedule a reminder in WordPress, pick the team it b
 * **Keep a full audit trail.** Every reminder event is logged with a timestamp, so you can always answer "was this actually sent?"
 * **Uninstall cleanly, or not at all.** Your data is never deleted unless you explicitly opt in under Settings.
 
+= Site alerts: know when your site needs you =
+
+Turn on **Site alerts** under Reminders > Settings and NotifyCrew posts to Slack when:
+
+* **Updates are available.** WordPress, plugin and theme updates, checked after WordPress looks for updates. Each new version is announced once, so the channel doesn't fill up.
+* **Automatic updates run.** Get every result, or only the failures, with the reason WordPress gave.
+* **A plugin or theme crashes the site.** Sent when WordPress catches the fatal error and emails the admin, at most once a day. The message says which file broke. It never contains WordPress's recovery-mode login link, because a shared channel is no place for a one-time admin login.
+
+Use the "Send test alert" button to check the connection. Alerts use the same Slack webhook or bot token as your reminders, and each alert type is off until you turn it on.
+
 = Common uses =
 
 * Daily stand-up and scrum reminders for engineering teams
@@ -44,6 +54,7 @@ NotifyCrew closes that gap. Schedule a reminder in WordPress, pick the team it b
 * Content and social publishing schedules
 * Client check-ins and recurring agency deliverables
 * Nudges for anything your team keeps forgetting
+* Update and crash alerts for agencies and site owners who live in Slack
 
 = Let your team schedule their own reminders =
 
@@ -122,6 +133,18 @@ Four tables prefixed `ncrw_`: teams, team memberships, reminders, and an audit l
 
 Yes. The `ncrw/v1/portal/bootstrap` and `ncrw/v1/portal/reminder` endpoints accept an API key in the `X-NCRW-API-Key` header along with a Google ID token, so you can run a decoupled frontend on any stack. Additional endpoints under `ncrw/v1` cover listing reminders, triggering processing, and queuing retries for logged-in users.
 
+= Can NotifyCrew tell me in Slack when plugins need updating? =
+
+Yes. Turn on "Updates available" under Reminders > Settings > Site alerts. NotifyCrew posts one message per new WordPress, plugin or theme version, after WordPress checks for updates (twice a day). You can also get a message for every automatic update, or only when one fails.
+
+= Will I get a Slack message when my site crashes? =
+
+When a plugin or theme causes a fatal error on an admin or login page, WordPress turns on recovery mode and emails the site admin. With "Crashes" turned on, NotifyCrew posts the same news to Slack at that moment, with the error and the file that caused it. Like WordPress's email, it is sent at most once a day. If your site disables WordPress's fatal error handler (`WP_DISABLE_FATAL_ERROR_HANDLER`), there is no crash alert. For full uptime monitoring, pair NotifyCrew with an external uptime checker.
+
+= Which timezone does NotifyCrew use? =
+
+Your site's timezone (Settings > General) by default. To use a different one for reminders, pick it under Reminders > Settings > Timezone. Changing it never moves existing reminders: they still go out at the same moment. In Slack, everyone sees the reminder time in their own timezone.
+
 = Is NotifyCrew translation ready? =
 
 Yes. Every user-facing string uses WordPress i18n functions with the `notifycrew` text domain, and a `.pot` file is included.
@@ -139,9 +162,10 @@ This plugin connects to the following third-party services:
 
 **Slack API (chat.postMessage)**
 
-This service delivers team reminders to Slack channels. It is activated every time a scheduled reminder is due or manually retried.
+This service delivers team reminders and site alerts to Slack, through an incoming webhook (hooks.slack.com) or the chat.postMessage API (slack.com/api), whichever you configure. It is used every time a scheduled reminder is due or manually retried, when a site alert you turned on fires, and when you press "Send test alert".
 
-Data sent: team name, reminder title, task/ticket link, submitter email address, reminder notes, and timestamp.
+Data sent for reminders: team name, reminder title, task/ticket link, submitter email address, reminder notes, and timestamp.
+Data sent for site alerts: site name, names and versions of WordPress, plugins and themes with updates or automatic update results, the error message and file path of a crash, and links to your site's admin screens.
 This service is provided by Slack Technologies: [terms of service](https://slack.com/terms-of-service), [privacy policy](https://slack.com/trust/privacy/privacy-policy).
 
 **Google OAuth / Sign-In**
@@ -152,6 +176,11 @@ Data sent: Google ID token (for identity verification only).
 This service is provided by Google LLC: [terms of service](https://policies.google.com/terms), [privacy policy](https://policies.google.com/privacy).
 
 == Changelog ==
+
+= 1.2.0 =
+* New: Site alerts. Get a Slack message when WordPress, plugin or theme updates are available, when automatic updates run or fail, and when a plugin or theme crashes the site. Each alert is off until you turn it on under Reminders > Settings, and there is a "Send test alert" button.
+* New: choose the timezone NotifyCrew uses for reminders under Reminders > Settings. It follows your site's timezone by default.
+* Times shown with a timezone name no longer show it twice when your time format already includes one.
 
 = 1.1.3 =
 * Fix: reminder times now use your site's timezone (Settings > General). Before, every time you typed was read as UTC, so a 10:00 reminder in India went out at 15:30.
@@ -179,6 +208,9 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 * Initial release of NotifyCrew.
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+New site alerts for Slack: updates available, automatic update results and plugin crashes. Plus a timezone setting for reminders. Nothing changes until you turn them on.
 
 = 1.1.3 =
 Reminder times now follow your site's timezone instead of UTC. Check the time on your existing reminders after updating.

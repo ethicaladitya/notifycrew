@@ -165,7 +165,7 @@ class Frontend_Service {
 									<?php
 									echo esc_html(
 										sprintf(
-											/* translators: %s: site timezone name, e.g. Asia/Kolkata */
+											/* translators: %s: timezone name, e.g. Asia/Kolkata */
 											__( 'Times are in %s.', 'notifycrew' ),
 											Time::site_timezone_label()
 										)
