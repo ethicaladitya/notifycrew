@@ -81,8 +81,8 @@ final class Time {
 	 * @return string Input value, or '' when empty/invalid.
 	 */
 	public static function utc_to_local_input( ?string $utc ): string {
-		$timestamp = self::utc_to_timestamp( $utc );
-		return null === $timestamp ? '' : wp_date( self::INPUT_FORMAT, $timestamp );
+		$date = null === $utc ? null : self::utc_to_site_datetime( $utc );
+		return null === $date ? '' : $date->format( self::INPUT_FORMAT );
 	}
 
 	/**
@@ -111,7 +111,8 @@ final class Time {
 	 * @return string
 	 */
 	public static function now_local_input(): string {
-		return wp_date( self::INPUT_FORMAT );
+		// Not wp_date(): its filter lets calendar plugins localise digits and calendars, which breaks a datetime-local value.
+		return ( new \DateTimeImmutable( 'now', wp_timezone() ) )->format( self::INPUT_FORMAT );
 	}
 
 	/**

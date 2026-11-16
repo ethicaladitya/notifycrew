@@ -156,6 +156,7 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 = 1.1.3 =
 * Fix: reminder times now use your site's timezone (Settings > General). Before, every time you typed was read as UTC, so a 10:00 reminder in India went out at 15:30.
 * Times in the admin, the team portal and the REST API are shown in the site timezone, with its name next to them.
+* REST API: `reminder_datetime` and `recurrence_end_date` are now read in the site timezone. Add an offset (2026-11-16T10:00:00+05:30, or Z for UTC) to send another timezone. Other formats, such as a bare date or a time ending in "UTC", are now refused with a 400 error. Responses include `recurrence_end_date_local`.
 * Slack shows each reader the reminder time in their own timezone.
 * Daily, weekly and monthly reminders keep the same local time when daylight saving time starts or ends.
 * Reminders you created before this update keep the moment you set them for; they are now shown in your site timezone.
