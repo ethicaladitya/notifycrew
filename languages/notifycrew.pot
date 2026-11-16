@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T09:11:52+00:00\n"
+"POT-Creation-Date: 2026-11-16T09:22:26+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: notifycrew\n"
@@ -374,9 +374,9 @@ msgid "Choose a valid end date for this recurring reminder."
 msgstr ""
 
 #: includes/admin/pages/class-reminders-page.php:628
-#: includes/admin/pages/class-settings-page.php:354
-#: includes/admin/pages/class-settings-page.php:372
-#: includes/admin/pages/class-settings-page.php:422
+#: includes/admin/pages/class-settings-page.php:360
+#: includes/admin/pages/class-settings-page.php:378
+#: includes/admin/pages/class-settings-page.php:428
 #: includes/admin/pages/class-teams-page.php:405
 msgid "Permission denied."
 msgstr ""
@@ -525,92 +525,96 @@ msgstr ""
 msgid "Sent when WordPress finishes its background updates."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:331
+#: includes/admin/pages/class-settings-page.php:330
+msgid "Not available on multisite: WordPress turns off recovery mode there, so there is no crash notice to forward."
+msgstr ""
+
+#: includes/admin/pages/class-settings-page.php:337
 msgid "Tell Slack when a plugin or theme causes a fatal error."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:333
+#: includes/admin/pages/class-settings-page.php:339
 msgid "Sent when WordPress emails the admin about the crash (at most once a day). The message includes the error, never the recovery-mode login link."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:345
+#: includes/admin/pages/class-settings-page.php:351
 msgid "Used with a bot token. An incoming webhook always posts to the channel it was created for."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:385
+#: includes/admin/pages/class-settings-page.php:391
 msgid "Please enter a valid Slack webhook URL."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:431
+#: includes/admin/pages/class-settings-page.php:437
 msgid "NotifyCrew - Settings"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:434
+#: includes/admin/pages/class-settings-page.php:440
 msgid "Settings saved."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:442
+#: includes/admin/pages/class-settings-page.php:448
 msgid "Test alert sent. Check your Slack channel."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:444
+#: includes/admin/pages/class-settings-page.php:450
 msgid "The test alert could not be sent. The reason is shown under Site alerts."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:452
+#: includes/admin/pages/class-settings-page.php:458
 msgid "Save Settings"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:461
+#: includes/admin/pages/class-settings-page.php:467
 msgid "Slack Integration"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:464
+#: includes/admin/pages/class-settings-page.php:470
 msgid "Slack credentials configured"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:466
+#: includes/admin/pages/class-settings-page.php:472
 msgid "No Slack credentials configured"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:475
+#: includes/admin/pages/class-settings-page.php:481
 msgid "Auth Mode"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:478
+#: includes/admin/pages/class-settings-page.php:484
 msgid "Incoming Webhook"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:479
+#: includes/admin/pages/class-settings-page.php:485
 msgid "Bot Token (chat.postMessage)"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:481
+#: includes/admin/pages/class-settings-page.php:487
 msgid "Choose global Slack authentication mode."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:485
+#: includes/admin/pages/class-settings-page.php:491
 msgid "Slack Webhook URL"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:488
-#: includes/admin/pages/class-settings-page.php:495
+#: includes/admin/pages/class-settings-page.php:494
+#: includes/admin/pages/class-settings-page.php:501
 msgid "Stored encrypted. Leave empty to keep current value."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:492
+#: includes/admin/pages/class-settings-page.php:498
 msgid "Slack Bot Token"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:499
+#: includes/admin/pages/class-settings-page.php:505
 msgid "Bot Username"
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:502
+#: includes/admin/pages/class-settings-page.php:508
 msgid "Optional display name override."
 msgstr ""
 
-#: includes/admin/pages/class-settings-page.php:506
+#: includes/admin/pages/class-settings-page.php:512
 msgid "Save Slack Credentials"
 msgstr ""
 
@@ -1093,100 +1097,100 @@ msgstr ""
 msgid "Sent/completed reminders cannot be edited."
 msgstr ""
 
-#. translators: %d: number of further updates not listed
-#: includes/services/class-site-alerts-service.php:128
-#, php-format
-msgid "…and %d more"
-msgid_plural "…and %d more"
-msgstr[0] ""
-msgstr[1] ""
-
 #. translators: 1: number of updates, 2: site name
-#: includes/services/class-site-alerts-service.php:133
+#: includes/services/class-site-alerts-service.php:178
 #, php-format
 msgid "%1$d update available on %2$s"
 msgid_plural "%1$d updates available on %2$s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/services/class-site-alerts-service.php:138
-#: includes/services/class-site-alerts-service.php:194
+#: includes/services/class-site-alerts-service.php:183
+#: includes/services/class-site-alerts-service.php:244
 msgid "Open Dashboard > Updates"
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:164
+#: includes/services/class-site-alerts-service.php:209
 msgid "no reason given"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/services/class-site-alerts-service.php:180
+#: includes/services/class-site-alerts-service.php:230
 #, php-format
 msgid "Automatic updates failed on %s"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/services/class-site-alerts-service.php:185
+#: includes/services/class-site-alerts-service.php:235
 #, php-format
 msgid "Automatic updates finished on %s"
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:189
+#: includes/services/class-site-alerts-service.php:239
 msgid "Updated"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/services/class-site-alerts-service.php:227
+#: includes/services/class-site-alerts-service.php:284
 #, php-format
 msgid "A plugin or theme crashed %s"
 msgstr ""
 
 #. translators: %s: file path and line
-#: includes/services/class-site-alerts-service.php:234
+#: includes/services/class-site-alerts-service.php:291
 #, php-format
 msgid "In %s"
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:236
+#: includes/services/class-site-alerts-service.php:293
 msgid "WordPress has emailed the site admin a recovery-mode link."
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:237
+#: includes/services/class-site-alerts-service.php:294
 msgid "Open Plugins"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/services/class-site-alerts-service.php:255
+#: includes/services/class-site-alerts-service.php:312
 #, php-format
 msgid "Test alert from %s"
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:256
+#: includes/services/class-site-alerts-service.php:313
 msgid "Site alerts from NotifyCrew will arrive here."
 msgstr ""
 
 #. translators: %s: theme name
-#: includes/services/class-site-alerts-service.php:298
+#: includes/services/class-site-alerts-service.php:362
 #, php-format
 msgid "%s theme"
 msgstr ""
 
 #. translators: 1: installed WordPress version, 2: new version
-#: includes/services/class-site-alerts-service.php:307
+#: includes/services/class-site-alerts-service.php:374
 #, php-format
 msgid "WordPress %1$s → %2$s"
 msgstr ""
 
 #. translators: 1: plugin or theme name, 2: new version
-#: includes/services/class-site-alerts-service.php:327
+#: includes/services/class-site-alerts-service.php:394
 #, php-format
 msgid "%1$s → %2$s"
 msgstr ""
 
 #. translators: 1: plugin or theme name, 2: installed version, 3: new version
-#: includes/services/class-site-alerts-service.php:330
+#: includes/services/class-site-alerts-service.php:397
 #, php-format
 msgid "%1$s %2$s → %3$s"
 msgstr ""
+
+#. translators: %d: number of further items not listed
+#: includes/services/class-site-alerts-service.php:525
+#, php-format
+msgid "…and %d more"
+msgid_plural "…and %d more"
+msgstr[0] ""
+msgstr[1] ""
 
 #: includes/services/class-slack-service.php:72
 msgid "No Slack channel configured. Set a Team Slack Channel or a global fallback channel."

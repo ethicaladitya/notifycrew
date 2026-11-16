@@ -31,6 +31,10 @@ define( 'NCRW_BASENAME', plugin_basename( __FILE__ ) );
 // Autoloader.
 require_once NCRW_DIR . 'includes/class-autoloader.php';
 
+// Crash alerts are hooked now, not on plugins_loaded, so a plugin that breaks while WordPress is still loading
+// plugins is reported too. They do nothing until "Crashes" is turned on under Site alerts.
+Aditya\NotifyCrew\Services\Site_Alerts_Service::get_instance()->register_crash_hooks();
+
 // Activation / Deactivation hooks.
 register_activation_hook( __FILE__, array( 'Aditya\NotifyCrew\Plugin', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'Aditya\NotifyCrew\Plugin', 'deactivate' ) );

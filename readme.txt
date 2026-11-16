@@ -40,7 +40,7 @@ NotifyCrew closes that gap. Schedule a reminder in WordPress, pick the team it b
 
 Turn on **Site alerts** under Reminders > Settings and NotifyCrew posts to Slack when:
 
-* **Updates are available.** WordPress, plugin and theme updates, checked after WordPress looks for updates. Each new version is announced once, so the channel doesn't fill up.
+* **Updates are available.** WordPress, plugin and theme updates, checked after WordPress looks for updates. New versions are listed in one message, and each version is announced only once, so the channel doesn't fill up.
 * **Automatic updates run.** Get every result, or only the failures, with the reason WordPress gave.
 * **A plugin or theme crashes the site.** Sent when WordPress catches the fatal error and emails the admin, at most once a day. The message says which file broke. It never contains WordPress's recovery-mode login link, because a shared channel is no place for a one-time admin login.
 
@@ -135,11 +135,15 @@ Yes. The `ncrw/v1/portal/bootstrap` and `ncrw/v1/portal/reminder` endpoints acce
 
 = Can NotifyCrew tell me in Slack when plugins need updating? =
 
-Yes. Turn on "Updates available" under Reminders > Settings > Site alerts. NotifyCrew posts one message per new WordPress, plugin or theme version, after WordPress checks for updates (twice a day). You can also get a message for every automatic update, or only when one fails.
+Yes. Turn on "Updates available" under Reminders > Settings > Site alerts. After WordPress checks for updates (twice a day), NotifyCrew posts one message listing any WordPress, plugin or theme versions it hasn't announced before. You can also get a message for every automatic update, or only when one fails.
 
 = Will I get a Slack message when my site crashes? =
 
-When a plugin or theme causes a fatal error on an admin or login page, WordPress turns on recovery mode and emails the site admin. With "Crashes" turned on, NotifyCrew posts the same news to Slack at that moment, with the error and the file that caused it. Like WordPress's email, it is sent at most once a day. If your site disables WordPress's fatal error handler (`WP_DISABLE_FATAL_ERROR_HANDLER`), there is no crash alert. For full uptime monitoring, pair NotifyCrew with an external uptime checker.
+When a plugin or theme causes a fatal error on an admin or login page, WordPress turns on recovery mode and emails the site admin. With "Crashes" turned on, NotifyCrew posts the same news to Slack at that moment, with the error and the file that caused it. Like WordPress's email, it is sent at most once a day. There is no crash alert when your site disables WordPress's fatal error handler (`WP_DISABLE_FATAL_ERROR_HANDLER`), on multisite (WordPress has no recovery mode there), or when the crash comes from a plugin that loads before NotifyCrew. For full uptime monitoring, pair NotifyCrew with an external uptime checker.
+
+= Does it work on multisite? =
+
+Reminders and update alerts work on each site of a network, with their own settings. Crash alerts are not available on multisite, because WordPress turns off recovery mode there.
 
 = Which timezone does NotifyCrew use? =
 

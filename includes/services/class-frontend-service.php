@@ -772,7 +772,7 @@ class Frontend_Service {
 		$display_time   = Time::display( (string) $reminder->remind_at, 'M j, Y · g:i A' );
 
 		$created_ts      = Time::utc_to_timestamp( (string) $reminder->created_at );
-		$created_display = null !== $created_ts ? wp_date( 'M j, Y', $created_ts ) : (string) $reminder->created_at;
+		$created_display = null !== $created_ts ? wp_date( 'M j, Y', $created_ts, Time::timezone() ) : (string) $reminder->created_at;
 
 		return array(
 			'id'              => (int) $reminder->id,

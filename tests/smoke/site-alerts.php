@@ -107,6 +107,34 @@ $set( array( 'alerts_updates' => 1 ) );
 $alerts->check_updates();
 $check( 'every message is valid Slack JSON with a section block', ! in_array( null, array_map( function ( $b ) { $j = json_decode( $b, true ); return isset( $j['blocks'][0]['text']['text'] ) ? 1 : null; }, $sent ), true ) );
 
+// Review fixes (1.2.0): escaped link labels, decoded site name, capped long messages, remembered fatal error.
+$old_name = get_option( 'blogname' );
+update_option( 'blogname', "Joe's Pizza & Co" );
+$set( array( 'alerts_auto_updates' => 'failures', 'alerts_updates' => 0 ) );
+$many = array();
+for ( $i = 1; $i <= 30; $i++ ) {
+	$many[] = (object) array( 'name' => "Plugin $i", 'result' => new WP_Error( 'x', str_repeat( 'Disk full while copying files. ', 8 ) ) );
+}
+$before = count( $sent );
+$alerts->on_automatic_updates( array( 'plugin' => $many ) );
+$j    = json_decode( (string) end( $sent ), true );
+$text = (string) ( $j['blocks'][0]['text']['text'] ?? '' );
+$check( 'long failure report stays under Slack\'s 3000-character limit', count( $sent ) === $before + 1 && mb_strlen( $text ) <= 3000, mb_strlen( $text ) );
+$check( 'long failure report says how many more', false !== strpos( $text, 'more' ), substr( $text, -120 ) );
+$check( 'site name decoded and escaped for Slack', false !== strpos( $text, "Joe's Pizza &amp; Co" ) && false === strpos( $text, '&#039;' ), substr( $text, 0, 120 ) );
+$check( 'link label ">" escaped so the link stays whole', false !== strpos( $text, '|Open Dashboard &gt; Updates>' ), substr( $text, -80 ) );
+update_option( 'blogname', $old_name );
+
+$set( array( 'alerts_fatal' => 1, 'alerts_auto_updates' => 'off' ) );
+$alerts->remember_fatal_error( true, array( 'type' => E_ERROR, 'message' => 'Uncaught Error: the real crash', 'file' => ABSPATH . 'wp-content/plugins/broken/broken.php', 'line' => 7 ) );
+trigger_error( 'a later notice', E_USER_NOTICE ); // phpcs:ignore -- replaces error_get_last() on purpose.
+$alerts->on_recovery_mode_email( $email );
+$j    = json_decode( (string) end( $sent ), true );
+$body = (string) ( $j['blocks'][0]['text']['text'] ?? '' );
+$check( 'crash alert names the error WordPress handled, not a later notice', false !== strpos( $body, 'the real crash' ) && false === strpos( $body, 'a later notice' ), substr( $body, 0, 300 ) );
+$check( 'crash alert path is relative', false !== strpos( $body, 'wp-content/plugins/broken/broken.php:7' ) && false === strpos( $body, ABSPATH ), substr( $body, 0, 300 ) );
+$check( 'crash hooks are registered before plugins_loaded', false !== has_filter( 'recovery_mode_email', array( $alerts, 'on_recovery_mode_email' ) ) && false !== has_filter( 'wp_should_handle_php_error', array( $alerts, 'remember_fatal_error' ) ) );
+
 update_option( 'ncrw_options', $old_opts );
 set_site_transient( 'update_plugins', $old_plugins );
 delete_option( Site_Alerts_Service::NOTIFIED_OPTION );

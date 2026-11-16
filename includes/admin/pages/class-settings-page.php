@@ -105,7 +105,7 @@ class Settings_Page {
 		$output['alerts_updates']      = ! empty( $input['alerts_updates'] ) ? 1 : 0;
 		$auto                          = isset( $input['alerts_auto_updates'] ) ? sanitize_key( (string) $input['alerts_auto_updates'] ) : 'off';
 		$output['alerts_auto_updates'] = in_array( $auto, array( 'off', 'failures', 'all' ), true ) ? $auto : 'off';
-		$output['alerts_fatal']        = ! empty( $input['alerts_fatal'] ) ? 1 : 0;
+		$output['alerts_fatal']        = ! is_multisite() && ! empty( $input['alerts_fatal'] ) ? 1 : 0;
 		$output['alerts_channel']      = isset( $input['alerts_channel'] ) ? sanitize_text_field( (string) $input['alerts_channel'] ) : '';
 
 		$output['frontend_enabled'] = ! empty( $input['frontend_enabled'] ) ? 1 : 0;
@@ -325,6 +325,12 @@ class Settings_Page {
 	 */
 	public function field_alerts_fatal(): void {
 		$options = get_option( self::OPTION_NAME, array() );
+		if ( is_multisite() ) {
+			?>
+			<p class="description"><?php esc_html_e( 'Not available on multisite: WordPress turns off recovery mode there, so there is no crash notice to forward.', 'notifycrew' ); ?></p>
+			<?php
+			return;
+		}
 		?>
 		<label>
 			<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME . '[alerts_fatal]' ); ?>" value="1" <?php checked( ! empty( $options['alerts_fatal'] ) ); ?>/>

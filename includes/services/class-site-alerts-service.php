@@ -46,6 +46,25 @@ final class Site_Alerts_Service {
 	const MAX_LINES = 20;
 
 	/**
+	 * Slack's limit for a section block's text is 3000 characters; stay under it.
+	 */
+	const MAX_TEXT = 2900;
+
+	/**
+	 * The fatal error WordPress decided to handle (captured before anything can overwrite error_get_last()).
+	 *
+	 * @var array|null
+	 */
+	private $fatal_error = null;
+
+	/**
+	 * Update types whose data WordPress returned in the last pending_updates() call.
+	 *
+	 * @var string[]
+	 */
+	private $checked_types = array();
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Site_Alerts_Service|null
@@ -78,7 +97,29 @@ final class Site_Alerts_Service {
 		}
 		add_action( self::CHECK_HOOK, array( $this, 'check_updates' ) );
 		add_action( 'automatic_updates_complete', array( $this, 'on_automatic_updates' ) );
+	}
+
+	/**
+	 * Crash hooks, added as soon as notifycrew.php loads (before plugins_loaded), so a plugin that breaks while
+	 * WordPress is still loading plugins is reported too.
+	 */
+	public function register_crash_hooks(): void {
+		add_filter( 'wp_should_handle_php_error', array( $this, 'remember_fatal_error' ), 10, 2 );
 		add_filter( 'recovery_mode_email', array( $this, 'on_recovery_mode_email' ), 10, 1 );
+	}
+
+	/**
+	 * Keep the error WordPress is about to handle; later notices would replace error_get_last().
+	 *
+	 * @param bool  $should_handle Whether WordPress handles this error.
+	 * @param array $error         Error from error_get_last().
+	 * @return bool Unchanged.
+	 */
+	public function remember_fatal_error( $should_handle, $error ) {
+		if ( $should_handle && is_array( $error ) ) {
+			$this->fatal_error = $error;
+		}
+		return $should_handle;
 	}
 
 	/**
@@ -109,8 +150,18 @@ final class Site_Alerts_Service {
 		$pending  = $this->pending_updates();
 		$notified = get_option( self::NOTIFIED_OPTION, array() );
 		$notified = is_array( $notified ) ? $notified : array();
-		$still    = array_values( array_intersect( $notified, array_keys( $pending ) ) );
-		$new      = array_diff_key( $pending, array_flip( $notified ) );
+		// Forget announced versions that are no longer pending, but only for update types WordPress returned data
+		// for: an empty or failed check must not make every update look new again.
+		$checked = $this->checked_types;
+		$still   = array_values(
+			array_filter(
+				$notified,
+				function ( $key ) use ( $pending, $checked ) {
+					return isset( $pending[ $key ] ) || ! in_array( strtok( (string) $key, ':' ), $checked, true );
+				}
+			)
+		);
+		$new     = array_diff_key( $pending, array_flip( $notified ) );
 
 		if ( empty( $new ) ) {
 			if ( $still !== $notified ) {
@@ -120,13 +171,7 @@ final class Site_Alerts_Service {
 		}
 
 		$site  = $this->site_name();
-		$lines = array_map( array( $this, 'esc' ), array_values( $new ) );
-		$more  = count( $lines ) - self::MAX_LINES;
-		$lines = array_slice( $lines, 0, self::MAX_LINES );
-		if ( $more > 0 ) {
-			/* translators: %d: number of further updates not listed */
-			$lines[] = sprintf( _n( '…and %d more', '…and %d more', $more, 'notifycrew' ), $more );
-		}
+		$lines = $this->cap_lines( array_map( array( $this, 'esc' ), array_values( $new ) ) );
 
 		$title = sprintf(
 			/* translators: 1: number of updates, 2: site name */
@@ -135,7 +180,7 @@ final class Site_Alerts_Service {
 			$site
 		);
 		$body = '• ' . implode( "\n• ", $lines );
-		$link = sprintf( '<%s|%s>', esc_url_raw( admin_url( 'update-core.php' ) ), __( 'Open Dashboard > Updates', 'notifycrew' ) );
+		$link = $this->link( admin_url( 'update-core.php' ), __( 'Open Dashboard > Updates', 'notifycrew' ) );
 
 		$sent = $this->send( ':arrows_counterclockwise: ' . $title, "*{$this->esc( $title )}*\n{$body}\n{$link}" );
 		if ( true === $sent ) {
@@ -162,7 +207,9 @@ final class Site_Alerts_Service {
 				$result = isset( $item->result ) ? $item->result : null;
 				if ( ! $result || is_wp_error( $result ) ) {
 					$reason   = is_wp_error( $result ) ? $result->get_error_message() : __( 'no reason given', 'notifycrew' );
-					$failed[] = $this->esc( $name . ': ' . wp_strip_all_tags( $reason ) );
+					$reason   = $this->relative_path( wp_strip_all_tags( $reason ) );
+					$reason   = mb_strlen( $reason ) > 200 ? mb_substr( $reason, 0, 200 ) . '…' : $reason;
+					$failed[] = $this->esc( $name . ': ' . $reason );
 				} elseif ( 'translation' !== $type ) {
 					$done[] = $this->esc( $name );
 				}
@@ -172,6 +219,9 @@ final class Site_Alerts_Service {
 		if ( empty( $failed ) && ( 'failures' === $mode || empty( $done ) ) ) {
 			return;
 		}
+		// Failures get most of the room; the whole message must stay under Slack's limit with its link intact.
+		$failed = $this->cap_lines( $failed, 1800 );
+		$done   = $this->cap_lines( $done, empty( $failed ) ? 1800 : 600 );
 
 		$site  = $this->site_name();
 		$parts = array();
@@ -191,7 +241,7 @@ final class Site_Alerts_Service {
 		if ( empty( $failed ) ) {
 			array_unshift( $parts, '*' . $this->esc( $title ) . '*' );
 		}
-		$parts[] = sprintf( '<%s|%s>', esc_url_raw( admin_url( 'update-core.php' ) ), __( 'Open Dashboard > Updates', 'notifycrew' ) );
+		$parts[] = $this->link( admin_url( 'update-core.php' ), __( 'Open Dashboard > Updates', 'notifycrew' ) );
 
 		$this->send( $icon . $title, implode( "\n", $parts ) );
 	}
@@ -205,12 +255,18 @@ final class Site_Alerts_Service {
 	 * @return array
 	 */
 	public function on_recovery_mode_email( $email ) {
-		if ( ! $this->enabled( 'alerts_fatal' ) ) {
+		if ( is_multisite() || ! $this->enabled( 'alerts_fatal' ) ) {
 			return $email;
 		}
 
 		try {
-			$error   = error_get_last();
+			$error = null !== $this->fatal_error ? $this->fatal_error : error_get_last();
+			// 3: after "Allowed memory size exhausted", get headroom first so neither this alert nor WordPress's
+			// email (sent right after this filter) runs out of memory. The request is ending anyway.
+			if ( is_array( $error ) && isset( $error['message'] ) && false !== strpos( (string) $error['message'], 'Allowed memory size' ) ) {
+				wp_raise_memory_limit( 'admin' );
+			}
+			$message = is_array( $error ) && isset( $error['message'] ) ? (string) $error['message'] : '';
 			$message = is_array( $error ) && isset( $error['message'] ) ? (string) $error['message'] : '';
 			$where   = is_array( $error ) && isset( $error['file'], $error['line'] ) ? $this->relative_path( (string) $error['file'] ) . ':' . (int) $error['line'] : '';
 			$message = $this->relative_path( wp_strip_all_tags( $message ) );
@@ -219,8 +275,9 @@ final class Site_Alerts_Service {
 			if ( false !== $cut ) {
 				$message = trim( substr( $message, 0, $cut ) );
 			}
-			if ( strlen( $message ) > 500 ) {
-				$message = substr( $message, 0, 500 ) . '…';
+			$message = str_replace( '```', "'''", $message );
+			if ( mb_strlen( $message ) > 500 ) {
+				$message = mb_substr( $message, 0, 500 ) . '…';
 			}
 
 			/* translators: %s: site name */
@@ -234,9 +291,9 @@ final class Site_Alerts_Service {
 				$text .= "\n" . $this->esc( sprintf( __( 'In %s', 'notifycrew' ), $where ) );
 			}
 			$text .= "\n" . $this->esc( __( 'WordPress has emailed the site admin a recovery-mode link.', 'notifycrew' ) );
-			$text .= "\n" . sprintf( '<%s|%s>', esc_url_raw( admin_url( 'plugins.php' ) ), __( 'Open Plugins', 'notifycrew' ) );
+			$text .= "\n" . $this->link( admin_url( 'plugins.php' ), __( 'Open Plugins', 'notifycrew' ) );
 
-			$this->send( ':rotating_light: ' . $title, $text, 10 );
+			$this->send( ':rotating_light: ' . $title, $text, 5 );
 		} catch ( \Throwable $e ) {
 			// Never make a fatal-error shutdown worse.
 			unset( $e );
@@ -263,9 +320,13 @@ final class Site_Alerts_Service {
 	 * @return array<string,string> Key => human line ("Akismet 5.3 → 5.4").
 	 */
 	public function pending_updates(): array {
-		$items = array();
+		$items               = array();
+		$this->checked_types = array();
 
 		$plugins = get_site_transient( 'update_plugins' );
+		if ( is_object( $plugins ) && isset( $plugins->last_checked ) ) {
+			$this->checked_types[] = 'plugin';
+		}
 		if ( is_object( $plugins ) && ! empty( $plugins->response ) && is_array( $plugins->response ) ) {
 			if ( ! function_exists( 'get_plugins' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -284,6 +345,9 @@ final class Site_Alerts_Service {
 		}
 
 		$themes = get_site_transient( 'update_themes' );
+		if ( is_object( $themes ) && isset( $themes->last_checked ) ) {
+			$this->checked_types[] = 'theme';
+		}
 		if ( is_object( $themes ) && ! empty( $themes->response ) && is_array( $themes->response ) ) {
 			foreach ( $themes->response as $slug => $data ) {
 				$data    = (array) $data;
@@ -300,6 +364,9 @@ final class Site_Alerts_Service {
 		}
 
 		$core = get_site_transient( 'update_core' );
+		if ( is_object( $core ) && ! empty( $core->updates ) ) {
+			$this->checked_types[] = 'core';
+		}
 		if ( is_object( $core ) && ! empty( $core->updates ) && is_array( $core->updates ) ) {
 			foreach ( $core->updates as $update ) {
 				if ( isset( $update->response, $update->current ) && 'upgrade' === $update->response ) {
@@ -339,6 +406,9 @@ final class Site_Alerts_Service {
 	 * @return true|\WP_Error
 	 */
 	private function send( string $fallback, string $mrkdwn, int $timeout = 15 ) {
+		if ( mb_strlen( $mrkdwn ) > self::MAX_TEXT ) {
+			$mrkdwn = mb_substr( $mrkdwn, 0, self::MAX_TEXT ) . '…';
+		}
 		$blocks = array(
 			array(
 				'type' => 'section',
@@ -394,7 +464,8 @@ final class Site_Alerts_Service {
 	 * @return string
 	 */
 	private function site_name(): string {
-		$name = wp_strip_all_tags( (string) get_bloginfo( 'name' ) );
+		// WordPress stores the site title HTML-encoded ("Joe&#039;s Pizza"); Slack wants plain text.
+		$name = wp_specialchars_decode( wp_strip_all_tags( (string) get_bloginfo( 'name' ) ), ENT_QUOTES );
 		return '' !== trim( $name ) ? $name : (string) wp_parse_url( home_url(), PHP_URL_HOST );
 	}
 
@@ -409,12 +480,50 @@ final class Site_Alerts_Service {
 	}
 
 	/**
-	 * Shorten absolute paths to paths inside the WordPress folder.
+	 * Shorten absolute paths to paths inside the WordPress install (also when wp-content lives outside ABSPATH).
 	 *
 	 * @param string $text Text that may contain paths.
 	 * @return string
 	 */
 	private function relative_path( string $text ): string {
-		return str_replace( wp_normalize_path( ABSPATH ), '', str_replace( '\\', '/', $text ) );
+		$roots = array( wp_normalize_path( trailingslashit( dirname( WP_CONTENT_DIR ) ) ), wp_normalize_path( ABSPATH ) );
+		return str_replace( $roots, '', str_replace( '\\', '/', $text ) );
+	}
+
+	/**
+	 * A Slack link with an escaped label (a bare ">" would end the link early).
+	 *
+	 * @param string $url   URL.
+	 * @param string $label Label.
+	 * @return string
+	 */
+	private function link( string $url, string $label ): string {
+		return sprintf( '<%s|%s>', esc_url_raw( $url ), $this->esc( $label ) );
+	}
+
+	/**
+	 * At most MAX_LINES lines and $budget characters, plus "…and N more" for the rest.
+	 *
+	 * @param string[] $lines  Lines (already escaped).
+	 * @param int      $budget Most characters the kept lines may use.
+	 * @return string[]
+	 */
+	private function cap_lines( array $lines, int $budget = 2000 ): array {
+		$kept = array();
+		$used = 0;
+		foreach ( $lines as $line ) {
+			$length = mb_strlen( $line ) + 3;
+			if ( count( $kept ) >= self::MAX_LINES || ( ! empty( $kept ) && $used + $length > $budget ) ) {
+				break;
+			}
+			$kept[] = $line;
+			$used  += $length;
+		}
+		$more = count( $lines ) - count( $kept );
+		if ( $more > 0 ) {
+			/* translators: %d: number of further items not listed */
+			$kept[] = sprintf( _n( '…and %d more', '…and %d more', $more, 'notifycrew' ), $more );
+		}
+		return $kept;
 	}
 }
