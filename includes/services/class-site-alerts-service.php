@@ -51,13 +51,6 @@ final class Site_Alerts_Service {
 	const MAX_TEXT = 2900;
 
 	/**
-	 * The fatal error WordPress decided to handle (captured before anything can overwrite error_get_last()).
-	 *
-	 * @var array|null
-	 */
-	private $fatal_error = null;
-
-	/**
 	 * Update types whose data WordPress returned in the last pending_updates() call.
 	 *
 	 * @var string[]
@@ -104,22 +97,24 @@ final class Site_Alerts_Service {
 	 * WordPress is still loading plugins is reported too.
 	 */
 	public function register_crash_hooks(): void {
-		add_filter( 'wp_should_handle_php_error', array( $this, 'remember_fatal_error' ), 10, 2 );
 		add_filter( 'recovery_mode_email', array( $this, 'on_recovery_mode_email' ), 10, 1 );
 	}
 
 	/**
-	 * Keep the error WordPress is about to handle; later notices would replace error_get_last().
+	 * The crash as WordPress described it in its email: the last block of the message, under an underlined
+	 * "Error Details" header (any language), built from the error WordPress actually handled. error_get_last() is
+	 * only a fallback, because a notice raised while the email is prepared would replace it.
 	 *
-	 * @param bool  $should_handle Whether WordPress handles this error.
-	 * @param array $error         Error from error_get_last().
-	 * @return bool Unchanged.
+	 * @param array $email Recovery-mode email.
+	 * @return string Plain text, or '' when there is nothing to report.
 	 */
-	public function remember_fatal_error( $should_handle, $error ) {
-		if ( $should_handle && is_array( $error ) ) {
-			$this->fatal_error = $error;
+	private function crash_details( $email ): string {
+		$body = is_array( $email ) && isset( $email['message'] ) ? (string) $email['message'] : '';
+		if ( preg_match( '/\n[^\n]+\n=+\n(.+)$/s', $body, $m ) ) {
+			return trim( $m[1] );
 		}
-		return $should_handle;
+		$error = error_get_last();
+		return is_array( $error ) && isset( $error['message'] ) ? (string) $error['message'] : '';
 	}
 
 	/**
@@ -259,16 +254,20 @@ final class Site_Alerts_Service {
 			return $email;
 		}
 
+		// A crash while plugins are still loading comes before 'init'; translating this early makes WordPress 6.7+
+		// print a "loaded too early" notice onto the error page. Keep it quiet for this alert only.
+		$early = ! did_action( 'init' );
+		if ( $early ) {
+			add_filter( 'doing_it_wrong_trigger_error', '__return_false' );
+		}
+
 		try {
-			$error = null !== $this->fatal_error ? $this->fatal_error : error_get_last();
-			// 3: after "Allowed memory size exhausted", get headroom first so neither this alert nor WordPress's
-			// email (sent right after this filter) runs out of memory. The request is ending anyway.
-			if ( is_array( $error ) && isset( $error['message'] ) && false !== strpos( (string) $error['message'], 'Allowed memory size' ) ) {
+			$message = $this->crash_details( $email );
+			// After "Allowed memory size exhausted", get headroom first so neither this alert nor WordPress's email
+			// (sent right after this filter) runs out of memory. The request is ending anyway.
+			if ( false !== strpos( $message, 'Allowed memory size' ) ) {
 				wp_raise_memory_limit( 'admin' );
 			}
-			$message = is_array( $error ) && isset( $error['message'] ) ? (string) $error['message'] : '';
-			$message = is_array( $error ) && isset( $error['message'] ) ? (string) $error['message'] : '';
-			$where   = is_array( $error ) && isset( $error['file'], $error['line'] ) ? $this->relative_path( (string) $error['file'] ) . ':' . (int) $error['line'] : '';
 			$message = $this->relative_path( wp_strip_all_tags( $message ) );
 			// The first line says what broke; the stack trace is noise in a chat message.
 			$cut = strpos( $message, 'Stack trace:' );
@@ -286,10 +285,6 @@ final class Site_Alerts_Service {
 			if ( '' !== $message ) {
 				$text .= "\n```" . $this->esc( $message ) . '```';
 			}
-			if ( '' !== $where ) {
-				/* translators: %s: file path and line */
-				$text .= "\n" . $this->esc( sprintf( __( 'In %s', 'notifycrew' ), $where ) );
-			}
 			$text .= "\n" . $this->esc( __( 'WordPress has emailed the site admin a recovery-mode link.', 'notifycrew' ) );
 			$text .= "\n" . $this->link( admin_url( 'plugins.php' ), __( 'Open Plugins', 'notifycrew' ) );
 
@@ -297,6 +292,10 @@ final class Site_Alerts_Service {
 		} catch ( \Throwable $e ) {
 			// Never make a fatal-error shutdown worse.
 			unset( $e );
+		}
+
+		if ( $early ) {
+			remove_filter( 'doing_it_wrong_trigger_error', '__return_false' );
 		}
 
 		return $email;
@@ -324,7 +323,7 @@ final class Site_Alerts_Service {
 		$this->checked_types = array();
 
 		$plugins = get_site_transient( 'update_plugins' );
-		if ( is_object( $plugins ) && isset( $plugins->last_checked ) ) {
+		if ( is_object( $plugins ) && isset( $plugins->response ) ) {
 			$this->checked_types[] = 'plugin';
 		}
 		if ( is_object( $plugins ) && ! empty( $plugins->response ) && is_array( $plugins->response ) ) {
@@ -345,7 +344,7 @@ final class Site_Alerts_Service {
 		}
 
 		$themes = get_site_transient( 'update_themes' );
-		if ( is_object( $themes ) && isset( $themes->last_checked ) ) {
+		if ( is_object( $themes ) && isset( $themes->response ) ) {
 			$this->checked_types[] = 'theme';
 		}
 		if ( is_object( $themes ) && ! empty( $themes->response ) && is_array( $themes->response ) ) {
@@ -418,7 +417,7 @@ final class Site_Alerts_Service {
 				),
 			),
 		);
-		$result = Slack_Service::get_instance()->send_message( $fallback, $blocks, (string) $this->option( 'alerts_channel', '' ), $timeout );
+		$result = Slack_Service::get_instance()->send_message( $this->esc( $fallback ), $blocks, (string) $this->option( 'alerts_channel', '' ), $timeout );
 
 		if ( is_wp_error( $result ) ) {
 			update_option(

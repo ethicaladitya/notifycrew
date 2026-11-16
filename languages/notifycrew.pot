@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T09:22:26+00:00\n"
+"POT-Creation-Date: 2026-11-16T09:26:44+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: notifycrew\n"
@@ -1098,94 +1098,88 @@ msgid "Sent/completed reminders cannot be edited."
 msgstr ""
 
 #. translators: 1: number of updates, 2: site name
-#: includes/services/class-site-alerts-service.php:178
+#: includes/services/class-site-alerts-service.php:173
 #, php-format
 msgid "%1$d update available on %2$s"
 msgid_plural "%1$d updates available on %2$s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/services/class-site-alerts-service.php:183
-#: includes/services/class-site-alerts-service.php:244
+#: includes/services/class-site-alerts-service.php:178
+#: includes/services/class-site-alerts-service.php:239
 msgid "Open Dashboard > Updates"
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:209
+#: includes/services/class-site-alerts-service.php:204
 msgid "no reason given"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/services/class-site-alerts-service.php:230
+#: includes/services/class-site-alerts-service.php:225
 #, php-format
 msgid "Automatic updates failed on %s"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/services/class-site-alerts-service.php:235
+#: includes/services/class-site-alerts-service.php:230
 #, php-format
 msgid "Automatic updates finished on %s"
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:239
+#: includes/services/class-site-alerts-service.php:234
 msgid "Updated"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/services/class-site-alerts-service.php:284
+#: includes/services/class-site-alerts-service.php:283
 #, php-format
 msgid "A plugin or theme crashed %s"
 msgstr ""
 
-#. translators: %s: file path and line
-#: includes/services/class-site-alerts-service.php:291
-#, php-format
-msgid "In %s"
-msgstr ""
-
-#: includes/services/class-site-alerts-service.php:293
+#: includes/services/class-site-alerts-service.php:288
 msgid "WordPress has emailed the site admin a recovery-mode link."
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:294
+#: includes/services/class-site-alerts-service.php:289
 msgid "Open Plugins"
 msgstr ""
 
 #. translators: %s: site name
-#: includes/services/class-site-alerts-service.php:312
+#: includes/services/class-site-alerts-service.php:311
 #, php-format
 msgid "Test alert from %s"
 msgstr ""
 
-#: includes/services/class-site-alerts-service.php:313
+#: includes/services/class-site-alerts-service.php:312
 msgid "Site alerts from NotifyCrew will arrive here."
 msgstr ""
 
 #. translators: %s: theme name
-#: includes/services/class-site-alerts-service.php:362
+#: includes/services/class-site-alerts-service.php:361
 #, php-format
 msgid "%s theme"
 msgstr ""
 
 #. translators: 1: installed WordPress version, 2: new version
-#: includes/services/class-site-alerts-service.php:374
+#: includes/services/class-site-alerts-service.php:373
 #, php-format
 msgid "WordPress %1$s → %2$s"
 msgstr ""
 
 #. translators: 1: plugin or theme name, 2: new version
-#: includes/services/class-site-alerts-service.php:394
+#: includes/services/class-site-alerts-service.php:393
 #, php-format
 msgid "%1$s → %2$s"
 msgstr ""
 
 #. translators: 1: plugin or theme name, 2: installed version, 3: new version
-#: includes/services/class-site-alerts-service.php:397
+#: includes/services/class-site-alerts-service.php:396
 #, php-format
 msgid "%1$s %2$s → %3$s"
 msgstr ""
 
 #. translators: %d: number of further items not listed
-#: includes/services/class-site-alerts-service.php:525
+#: includes/services/class-site-alerts-service.php:524
 #, php-format
 msgid "…and %d more"
 msgid_plural "…and %d more"

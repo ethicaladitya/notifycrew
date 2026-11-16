@@ -126,14 +126,18 @@ $check( 'link label ">" escaped so the link stays whole', false !== strpos( $tex
 update_option( 'blogname', $old_name );
 
 $set( array( 'alerts_fatal' => 1, 'alerts_auto_updates' => 'off' ) );
-$alerts->remember_fatal_error( true, array( 'type' => E_ERROR, 'message' => 'Uncaught Error: the real crash', 'file' => ABSPATH . 'wp-content/plugins/broken/broken.php', 'line' => 7 ) );
+// WordPress's email ends with an underlined "Error Details" block built from the error it handled.
+$crash_email            = $email;
+$crash_email['message'] = "Howdy!\n\nSome text.\n\nError Details\n=============\nAn error of type E_ERROR was caused in line 7 of the file " . ABSPATH . "wp-content/plugins/broken/broken.php. Error message: Uncaught Error: the real crash\nStack trace:\n#0 {main}";
 trigger_error( 'a later notice', E_USER_NOTICE ); // phpcs:ignore -- replaces error_get_last() on purpose.
-$alerts->on_recovery_mode_email( $email );
+$back = $alerts->on_recovery_mode_email( $crash_email );
+$check( 'crash email returned unchanged', $back === $crash_email );
 $j    = json_decode( (string) end( $sent ), true );
 $body = (string) ( $j['blocks'][0]['text']['text'] ?? '' );
 $check( 'crash alert names the error WordPress handled, not a later notice', false !== strpos( $body, 'the real crash' ) && false === strpos( $body, 'a later notice' ), substr( $body, 0, 300 ) );
-$check( 'crash alert path is relative', false !== strpos( $body, 'wp-content/plugins/broken/broken.php:7' ) && false === strpos( $body, ABSPATH ), substr( $body, 0, 300 ) );
-$check( 'crash hooks are registered before plugins_loaded', false !== has_filter( 'recovery_mode_email', array( $alerts, 'on_recovery_mode_email' ) ) && false !== has_filter( 'wp_should_handle_php_error', array( $alerts, 'remember_fatal_error' ) ) );
+$check( 'crash alert path is relative', false !== strpos( $body, 'the file wp-content/plugins/broken/broken.php' ) && false === strpos( $body, ABSPATH ), substr( $body, 0, 300 ) );
+$check( 'stack trace left out', false === strpos( $body, 'Stack trace' ), substr( $body, 0, 300 ) );
+$check( 'crash hook registered', false !== has_filter( 'recovery_mode_email', array( $alerts, 'on_recovery_mode_email' ) ) );
 
 update_option( 'ncrw_options', $old_opts );
 set_site_transient( 'update_plugins', $old_plugins );
