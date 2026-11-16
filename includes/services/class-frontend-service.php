@@ -88,7 +88,7 @@ class Frontend_Service {
 			return '<p>' . esc_html__( 'Frontend reminders are not configured yet. Please set a Google OAuth Client ID in plugin settings.', 'notifycrew' ) . '</p>';
 		}
 
-		$this->enqueue_assets( $client_id );
+		$this->enqueue_assets();
 		$default_datetime = Time::now_local_input();
 
 		ob_start();
@@ -405,7 +405,7 @@ class Frontend_Service {
 			return '<p>' . esc_html__( 'Frontend reminders are not configured yet. Please set a Google OAuth Client ID in plugin settings.', 'notifycrew' ) . '</p>';
 		}
 
-		$this->enqueue_view_assets( $client_id );
+		$this->enqueue_view_assets();
 
 		ob_start();
 		?>
@@ -569,10 +569,8 @@ class Frontend_Service {
 
 	/**
 	 * Enqueue frontend assets.
-	 *
-	 * @param string $client_id Google client ID.
 	 */
-	private function enqueue_assets( string $client_id ): void {
+	private function enqueue_assets(): void {
 		wp_enqueue_style(
 			'ncrw-frontend',
 			NCRW_URL . 'assets/css/frontend.css',
@@ -720,10 +718,8 @@ class Frontend_Service {
 
 	/**
 	 * Enqueue assets for the view portal shortcode.
-	 *
-	 * @param string $client_id Google OAuth client ID.
 	 */
-	private function enqueue_view_assets( string $client_id ): void {
+	private function enqueue_view_assets(): void {
 		wp_enqueue_style(
 			'ncrw-frontend',
 			NCRW_URL . 'assets/css/frontend.css',

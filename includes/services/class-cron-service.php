@@ -44,7 +44,7 @@ class Cron_Service {
 	 * Register hooks (called from Plugin::init_services).
 	 */
 	public function register(): void {
-		add_filter( 'cron_schedules', array( $this, 'add_cron_interval' ) );
+		add_filter( 'cron_schedules', array( $this, 'add_cron_interval' ) ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- reminders are due to the minute; one 5-minute event runs a single indexed query for due rows.
 		add_action( self::HOOK, array( $this, 'process' ) );
 		add_action( 'init', array( $this, 'ensure_scheduled' ), 20 );
 	}
@@ -71,7 +71,7 @@ class Cron_Service {
 	public function schedule(): void {
 		// Activation hooks can run before cron_schedules filters are attached in runtime.
 		// Ensure our custom interval is available before scheduling.
-		add_filter( 'cron_schedules', array( $this, 'add_cron_interval' ) );
+		add_filter( 'cron_schedules', array( $this, 'add_cron_interval' ) ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- reminders are due to the minute; one 5-minute event runs a single indexed query for due rows.
 
 		if ( ! wp_next_scheduled( self::HOOK ) ) {
 			wp_schedule_event( time(), self::INTERVAL, self::HOOK );

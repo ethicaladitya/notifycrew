@@ -11,16 +11,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 spl_autoload_register(
-	function ( $class ) {
+	function ( $class_name ) {
 		$prefix   = 'Aditya\\NotifyCrew\\';
 		$base_dir = NCRW_DIR . 'includes/';
 
 		$len = strlen( $prefix );
-		if ( strncmp( $prefix, $class, $len ) !== 0 ) {
+		if ( strncmp( $prefix, $class_name, $len ) !== 0 ) {
 				return;
 		}
 
-		$relative_class = substr( $class, $len );
+		$relative_class = substr( $class_name, $len );
 
 		// Map namespace segments to directory structure.
 		$parts      = explode( '\\', $relative_class );
