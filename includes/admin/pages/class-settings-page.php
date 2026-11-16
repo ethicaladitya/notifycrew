@@ -13,6 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use Aditya\NotifyCrew\Services\Slack_Service;
+use Aditya\NotifyCrew\Services\Site_Alerts_Service;
+use Aditya\NotifyCrew\Time;
 
 /**
  * Class Settings_Page
@@ -48,6 +50,7 @@ class Settings_Page {
 	public function register(): void {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_post_ncrw_save_slack_credentials', array( $this, 'handle_slack_save' ) );
+		add_action( 'admin_post_ncrw_send_test_alert', array( $this, 'handle_test_alert' ) );
 	}
 
 	/**
@@ -64,8 +67,15 @@ class Settings_Page {
 		);
 
 		add_settings_section( 'ncrw_general', __( 'General', 'notifycrew' ), '__return_false', 'ncrw-settings' );
+		add_settings_field( 'timezone', __( 'Timezone', 'notifycrew' ), array( $this, 'field_timezone' ), 'ncrw-settings', 'ncrw_general', array( 'label_for' => 'ncrw_timezone' ) );
 		add_settings_field( 'visibility', __( 'Reminder Visibility', 'notifycrew' ), array( $this, 'field_visibility' ), 'ncrw-settings', 'ncrw_general' );
 		add_settings_field( 'allow_uninstall_cleanup', __( 'Data Cleanup', 'notifycrew' ), array( $this, 'field_allow_uninstall_cleanup' ), 'ncrw-settings', 'ncrw_general' );
+
+		add_settings_section( 'ncrw_alerts', __( 'Site alerts', 'notifycrew' ), array( $this, 'section_alerts' ), 'ncrw-settings' );
+		add_settings_field( 'alerts_updates', __( 'Updates available', 'notifycrew' ), array( $this, 'field_alerts_updates' ), 'ncrw-settings', 'ncrw_alerts' );
+		add_settings_field( 'alerts_auto_updates', __( 'Automatic updates', 'notifycrew' ), array( $this, 'field_alerts_auto_updates' ), 'ncrw-settings', 'ncrw_alerts', array( 'label_for' => 'ncrw_alerts_auto_updates' ) );
+		add_settings_field( 'alerts_fatal', __( 'Crashes', 'notifycrew' ), array( $this, 'field_alerts_fatal' ), 'ncrw-settings', 'ncrw_alerts' );
+		add_settings_field( 'alerts_channel', __( 'Alert channel', 'notifycrew' ), array( $this, 'field_alerts_channel' ), 'ncrw-settings', 'ncrw_alerts', array( 'label_for' => 'ncrw_alerts_channel' ) );
 
 		add_settings_section( 'ncrw_frontend', __( 'Frontend Reminder Intake', 'notifycrew' ), '__return_false', 'ncrw-settings' );
 		add_settings_field( 'frontend_enabled', __( 'Enable Frontend Form', 'notifycrew' ), array( $this, 'field_frontend_enabled' ), 'ncrw-settings', 'ncrw_frontend' );
@@ -89,6 +99,14 @@ class Settings_Page {
 		}
 
 		$output['allow_uninstall_cleanup'] = ! empty( $input['allow_uninstall_cleanup'] ) ? 1 : 0;
+
+		$output['timezone'] = Time::sanitize_setting( isset( $input['timezone'] ) ? (string) $input['timezone'] : '' );
+
+		$output['alerts_updates']      = ! empty( $input['alerts_updates'] ) ? 1 : 0;
+		$auto                          = isset( $input['alerts_auto_updates'] ) ? sanitize_key( (string) $input['alerts_auto_updates'] ) : 'off';
+		$output['alerts_auto_updates'] = in_array( $auto, array( 'off', 'failures', 'all' ), true ) ? $auto : 'off';
+		$output['alerts_fatal']        = ! is_multisite() && ! empty( $input['alerts_fatal'] ) ? 1 : 0;
+		$output['alerts_channel']      = isset( $input['alerts_channel'] ) ? sanitize_text_field( (string) $input['alerts_channel'] ) : '';
 
 		$output['frontend_enabled'] = ! empty( $input['frontend_enabled'] ) ? 1 : 0;
 
@@ -218,6 +236,141 @@ class Settings_Page {
 	}
 
 	/**
+	 * Field renderer: NotifyCrew's own timezone ('' = same as the site).
+	 */
+	public function field_timezone(): void {
+		$current = Time::setting();
+		$allowed = array(
+			'optgroup' => array( 'label' => true ),
+			'option'   => array(
+				'value'    => true,
+				'selected' => true,
+			),
+		);
+		// A non-empty value that matches nothing stops wp_timezone_choice() adding its own "Select a city" placeholder.
+		$choices = wp_timezone_choice( '' === $current ? 'ncrw-same-as-site' : $current, get_user_locale() );
+		?>
+		<select id="ncrw_timezone" name="<?php echo esc_attr( self::OPTION_NAME . '[timezone]' ); ?>">
+			<option value="" <?php selected( $current, '' ); ?>>
+				<?php
+				/* translators: %s: the site's timezone, e.g. Asia/Kolkata */
+				echo esc_html( sprintf( __( 'Same as site (%s)', 'notifycrew' ), wp_timezone_string() ) );
+				?>
+			</option>
+			<?php echo wp_kses( $choices, $allowed ); ?>
+		</select>
+		<p class="description"><?php esc_html_e( 'The timezone reminder times are typed and shown in, on the admin screens and the team portal. Changing it does not move existing reminders: they still go out at the same moment. Slack always shows each reader their own local time.', 'notifycrew' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Section intro for Site alerts, with the test button and the last delivery error.
+	 */
+	public function section_alerts(): void {
+		$last = get_option( Site_Alerts_Service::LAST_ERROR_OPTION, false );
+		?>
+		<p><?php esc_html_e( 'Get a Slack message when this site needs updates, when automatic updates run or fail, and when a plugin or theme crashes the site. Alerts use the Slack connection below.', 'notifycrew' ); ?></p>
+		<p>
+			<button type="submit" class="button" form="ncrw-test-alert-form"><?php esc_html_e( 'Send test alert', 'notifycrew' ); ?></button>
+		</p>
+		<?php if ( is_array( $last ) && ! empty( $last['message'] ) ) : ?>
+			<div class="notice notice-warning inline"><p>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: 1: date and time, 2: Slack's error message */
+						__( 'The last alert could not be sent (%1$s): %2$s', 'notifycrew' ),
+						wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $last['time'], Time::timezone() ),
+						(string) $last['message']
+					)
+				);
+				?>
+			</p></div>
+		<?php endif; ?>
+		<?php
+	}
+
+	/**
+	 * Field renderer.
+	 */
+	public function field_alerts_updates(): void {
+		$options = get_option( self::OPTION_NAME, array() );
+		?>
+		<label>
+			<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME . '[alerts_updates]' ); ?>" value="1" <?php checked( ! empty( $options['alerts_updates'] ) ); ?>/>
+			<?php esc_html_e( 'Tell Slack when WordPress, a plugin or a theme has an update.', 'notifycrew' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'Checked after WordPress looks for updates (twice a day). Each new version is announced once.', 'notifycrew' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Field renderer.
+	 */
+	public function field_alerts_auto_updates(): void {
+		$options = get_option( self::OPTION_NAME, array() );
+		$current = isset( $options['alerts_auto_updates'] ) ? (string) $options['alerts_auto_updates'] : 'off';
+		?>
+		<select id="ncrw_alerts_auto_updates" name="<?php echo esc_attr( self::OPTION_NAME . '[alerts_auto_updates]' ); ?>">
+			<option value="off" <?php selected( $current, 'off' ); ?>><?php esc_html_e( 'Off', 'notifycrew' ); ?></option>
+			<option value="failures" <?php selected( $current, 'failures' ); ?>><?php esc_html_e( 'Only when an update fails', 'notifycrew' ); ?></option>
+			<option value="all" <?php selected( $current, 'all' ); ?>><?php esc_html_e( 'Every automatic update', 'notifycrew' ); ?></option>
+		</select>
+		<p class="description"><?php esc_html_e( 'Sent when WordPress finishes its background updates.', 'notifycrew' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Field renderer.
+	 */
+	public function field_alerts_fatal(): void {
+		$options = get_option( self::OPTION_NAME, array() );
+		if ( is_multisite() ) {
+			?>
+			<p class="description"><?php esc_html_e( 'Not available on multisite: WordPress turns off recovery mode there, so there is no crash notice to forward.', 'notifycrew' ); ?></p>
+			<?php
+			return;
+		}
+		?>
+		<label>
+			<input type="checkbox" name="<?php echo esc_attr( self::OPTION_NAME . '[alerts_fatal]' ); ?>" value="1" <?php checked( ! empty( $options['alerts_fatal'] ) ); ?>/>
+			<?php esc_html_e( 'Tell Slack when a plugin or theme causes a fatal error.', 'notifycrew' ); ?>
+		</label>
+		<p class="description"><?php esc_html_e( 'Sent when WordPress emails the admin about the crash (at most once a day). The message includes the error, never the recovery-mode login link.', 'notifycrew' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Field renderer.
+	 */
+	public function field_alerts_channel(): void {
+		$options = get_option( self::OPTION_NAME, array() );
+		$channel = isset( $options['alerts_channel'] ) ? (string) $options['alerts_channel'] : '';
+		?>
+		<input type="text" id="ncrw_alerts_channel" class="regular-text" name="<?php echo esc_attr( self::OPTION_NAME . '[alerts_channel]' ); ?>" value="<?php echo esc_attr( $channel ); ?>" placeholder="#site-alerts"/>
+		<p class="description"><?php esc_html_e( 'Used with a bot token. An incoming webhook always posts to the channel it was created for.', 'notifycrew' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Handle the "Send test alert" button.
+	 */
+	public function handle_test_alert(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'notifycrew' ), 403 );
+		}
+		check_admin_referer( 'ncrw_send_test_alert', 'ncrw_test_alert_nonce' );
+
+		$result = Site_Alerts_Service::get_instance()->send_test();
+		$args   = array(
+			'page'      => 'ncrw-settings',
+			'ncrw_test' => true === $result ? 'sent' : 'failed',
+		);
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/**
 	 * Handle Slack credential save.
 	 */
 	public function handle_slack_save(): void {
@@ -290,12 +443,24 @@ class Settings_Page {
 				<?php settings_errors( 'ncrw_slack' ); ?>
 			<?php endif; ?>
 
+			<?php if ( isset( $_GET['ncrw_test'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only. ?>
+				<?php if ( 'sent' === $_GET['ncrw_test'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only. ?>
+					<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Test alert sent. Check your Slack channel.', 'notifycrew' ); ?></p></div>
+				<?php else : ?>
+					<div class="notice notice-error is-dismissible"><p><?php esc_html_e( 'The test alert could not be sent. The reason is shown under Site alerts.', 'notifycrew' ); ?></p></div>
+				<?php endif; ?>
+			<?php endif; ?>
+
 			<form method="post" action="options.php">
 				<?php
 				settings_fields( self::OPTION_GROUP );
 				do_settings_sections( 'ncrw-settings' );
 				submit_button( __( 'Save Settings', 'notifycrew' ) );
 				?>
+			</form>
+			<form id="ncrw-test-alert-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<input type="hidden" name="action" value="ncrw_send_test_alert"/>
+				<?php wp_nonce_field( 'ncrw_send_test_alert', 'ncrw_test_alert_nonce' ); ?>
 			</form>
 
 			<hr/>

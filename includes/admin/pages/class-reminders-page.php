@@ -421,8 +421,8 @@ class Reminders_Page {
 								<?php
 								echo esc_html(
 									sprintf(
-										/* translators: %s: site timezone name, e.g. Asia/Kolkata */
-										__( 'Optional when using Quick Schedule. Times are in the site timezone (%s), set under Settings > General.', 'notifycrew' ),
+										/* translators: %s: timezone name, e.g. Asia/Kolkata */
+										__( 'Optional when using Quick Schedule. Times are in %s (change it under Reminders > Settings).', 'notifycrew' ),
 										Time::site_timezone_label()
 									)
 								);

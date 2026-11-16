@@ -51,6 +51,9 @@ delete_option( Slack_Service::BOT_TOKEN_OPTION );
 delete_option( Slack_Service::USERNAME_OPTION );
 delete_option( 'ncrw_slack_channel' );
 delete_option( Settings_Page::OPTION_NAME );
+delete_option( 'ncrw_alerts_notified' );
+delete_option( 'ncrw_alerts_last_error' );
+wp_clear_scheduled_hook( 'ncrw_site_alerts_check' );
 
 // Remove any leftover transients created by the admin forms.
 global $wpdb;

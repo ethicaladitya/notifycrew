@@ -80,6 +80,37 @@ class Slack_Service {
 	}
 
 	/**
+	 * Send a free-form message (site alerts, test messages) with the saved Slack credentials.
+	 *
+	 * @param string $text    Plain-text fallback, used for notifications.
+	 * @param array  $blocks  Block Kit blocks.
+	 * @param string $channel Channel for bot-token mode; falls back to the global channel. Ignored by webhooks.
+	 * @param int    $timeout Seconds to wait for Slack.
+	 * @return true|\WP_Error
+	 */
+	public function send_message( string $text, array $blocks = array(), string $channel = '', int $timeout = 15 ) {
+		$payload = array( 'text' => $text );
+		if ( ! empty( $blocks ) ) {
+			$payload['blocks'] = $blocks;
+		}
+		$username = $this->get_username();
+		if ( '' !== $username ) {
+			$payload['username'] = $username;
+		}
+
+		if ( self::MODE_BOT === $this->get_mode() ) {
+			$channel = '' !== trim( $channel ) ? trim( $channel ) : trim( $this->get_channel() );
+			if ( '' === $channel ) {
+				return new \WP_Error( 'missing_alert_channel', __( 'No Slack channel set for site alerts. Add one under Site alerts, or use an incoming webhook.', 'notifycrew' ) );
+			}
+			$payload['channel'] = $channel;
+			return $this->post_to_bot( $payload, $timeout );
+		}
+
+		return $this->post_to_webhook( $payload, $timeout );
+	}
+
+	/**
 	 * Save the selected Slack auth mode.
 	 *
 	 * @param string $mode Mode value.
@@ -223,18 +254,28 @@ class Slack_Service {
 	 * @return true|\WP_Error
 	 */
 	private function send_via_webhook( Reminder $reminder, string $channel, string $mention_tag = '' ) {
+		return $this->post_to_webhook( $this->build_payload( $reminder, $channel, $mention_tag ) );
+	}
+
+	/**
+	 * Post a ready payload to the incoming webhook.
+	 *
+	 * @param array $payload Slack message payload.
+	 * @param int   $timeout Seconds to wait for Slack.
+	 * @return true|\WP_Error
+	 */
+	private function post_to_webhook( array $payload, int $timeout = 15 ) {
 		$webhook = $this->get_webhook();
 		if ( '' === $webhook ) {
 			return new \WP_Error( 'no_webhook', __( 'Slack webhook URL is not configured.', 'notifycrew' ) );
 		}
 
-		$payload  = $this->build_payload( $reminder, $channel, $mention_tag );
 		$response = wp_remote_post(
 			$webhook,
 			array(
 				'headers'   => array( 'Content-Type' => 'application/json' ),
 				'body'      => wp_json_encode( $payload ),
-				'timeout'   => 15,
+				'timeout'   => $timeout,
 				'sslverify' => true,
 			)
 		);
@@ -269,12 +310,22 @@ class Slack_Service {
 	 * @return true|\WP_Error
 	 */
 	private function send_via_bot_token( Reminder $reminder, string $channel, string $mention_tag = '' ) {
+		return $this->post_to_bot( $this->build_payload( $reminder, $channel, $mention_tag ) );
+	}
+
+	/**
+	 * Post a ready payload with the bot token (chat.postMessage).
+	 *
+	 * @param array $payload Slack message payload; must include 'channel'.
+	 * @param int   $timeout Seconds to wait for Slack.
+	 * @return true|\WP_Error
+	 */
+	private function post_to_bot( array $payload, int $timeout = 15 ) {
 		$token = $this->get_bot_token();
 		if ( '' === $token ) {
 			return new \WP_Error( 'no_bot_token', __( 'Slack bot token is not configured.', 'notifycrew' ) );
 		}
 
-		$payload  = $this->build_payload( $reminder, $channel, $mention_tag );
 		$response = wp_remote_post(
 			'https://slack.com/api/chat.postMessage',
 			array(
@@ -283,7 +334,7 @@ class Slack_Service {
 					'Content-Type'  => 'application/json; charset=utf-8',
 				),
 				'body'    => wp_json_encode( $payload ),
-				'timeout' => 15,
+				'timeout' => $timeout,
 			)
 		);
 

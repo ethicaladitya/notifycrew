@@ -16,6 +16,7 @@ use Aditya\NotifyCrew\Database\Database;
 use Aditya\NotifyCrew\Services\Cron_Service;
 use Aditya\NotifyCrew\Services\Frontend_Service;
 use Aditya\NotifyCrew\Services\Rest_Service;
+use Aditya\NotifyCrew\Services\Site_Alerts_Service;
 use Aditya\NotifyCrew\Services\Slack_Service;
 use Aditya\NotifyCrew\Admin\Admin;
 
@@ -76,6 +77,9 @@ final class Plugin {
 		// REST API.
 		Rest_Service::get_instance()->register();
 
+		// Site alerts: updates, automatic update results and crashes sent to Slack.
+		Site_Alerts_Service::get_instance()->register();
+
 		// Frontend shortcode + Google-authenticated submissions.
 		Frontend_Service::get_instance()->register();
 
@@ -104,6 +108,7 @@ final class Plugin {
 	 */
 	public static function deactivate(): void {
 		Cron_Service::get_instance()->unschedule();
+		Site_Alerts_Service::unschedule();
 		flush_rewrite_rules();
 	}
 }
