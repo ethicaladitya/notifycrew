@@ -682,6 +682,7 @@ class Rest_Service {
 			'recurrence_end_type'        => (string) $reminder->recurrence_end_type,
 			'recurrence_end_occurrences' => $reminder->recurrence_end_occurrences,
 			'recurrence_end_date'        => $reminder->recurrence_end_date,
+			'recurrence_end_date_local'  => $reminder->recurrence_end_date ? Time::utc_to_local_input( (string) $reminder->recurrence_end_date ) : '',
 		);
 	}
 
