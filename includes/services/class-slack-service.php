@@ -36,6 +36,11 @@ class Slack_Service {
 	const MODE_WEBHOOK = 'webhook';
 	const MODE_BOT     = 'bot';
 
+	/** Slack Block Kit limits (characters, counted the way Slack counts them). */
+	const MAX_HEADER  = 150;
+	const MAX_FIELD   = 2000;
+	const MAX_SECTION = 3000;
+
 	/**
 	 * Singleton instance.
 	 *
@@ -374,11 +379,19 @@ class Slack_Service {
 			),
 		);
 
+		// A long link is shown shortened; one too long for a field gets its own section below.
+		$link_block = '';
 		if ( ! empty( $reminder->task_link ) ) {
-			$fields[] = array(
-				'type' => 'mrkdwn',
-				'text' => sprintf( "*%s*\n<%s|%s>", __( 'Task/Ticket/Slack Link', 'notifycrew' ), esc_url_raw( $reminder->task_link ), esc_url_raw( $reminder->task_link ) ),
-			);
+			$url       = esc_url_raw( $reminder->task_link );
+			$link_text = sprintf( "*%s*\n<%s|%s>", __( 'Task/Ticket/Slack Link', 'notifycrew' ), $url, str_replace( array( '|', '>' ), '', self::fit_text( $url, 80 ) ) );
+			if ( self::text_length( $link_text ) <= self::MAX_FIELD ) {
+				$fields[] = array(
+					'type' => 'mrkdwn',
+					'text' => $link_text,
+				);
+			} elseif ( self::text_length( $link_text ) <= self::MAX_SECTION ) {
+				$link_block = $link_text;
+			}
 		}
 
 		if ( $reminder->user_id > 0 ) {
@@ -387,7 +400,7 @@ class Slack_Service {
 				$email    = '' !== $reminder->member_email ? $reminder->member_email : $user->user_email;
 				$fields[] = array(
 					'type' => 'mrkdwn',
-					'text' => sprintf( "*%s*\n%s (%s)", __( 'Added by', 'notifycrew' ), $user->display_name, $email ),
+					'text' => self::fit_text( sprintf( "*%s*\n%s (%s)", __( 'Added by', 'notifycrew' ), $user->display_name, $email ), self::MAX_FIELD ),
 				);
 			} elseif ( '' !== $reminder->member_email ) {
 				$fields[] = array(
@@ -409,7 +422,7 @@ class Slack_Service {
 					'type' => 'header',
 					'text' => array(
 						'type'  => 'plain_text',
-						'text'  => sprintf( ':bell: %s', $reminder->title ),
+						'text'  => self::fit_text( sprintf( ':bell: %s', $reminder->title ), self::MAX_HEADER ),
 						'emoji' => true,
 					),
 				),
@@ -422,6 +435,16 @@ class Slack_Service {
 
 		if ( '' !== $channel ) {
 			$payload['channel'] = $channel;
+		}
+
+		if ( '' !== $link_block ) {
+			$payload['blocks'][] = array(
+				'type' => 'section',
+				'text' => array(
+					'type' => 'mrkdwn',
+					'text' => $link_block,
+				),
+			);
 		}
 
 		if ( '' !== $mention_tag ) {
@@ -439,7 +462,7 @@ class Slack_Service {
 				'type' => 'section',
 				'text' => array(
 					'type' => 'mrkdwn',
-					'text' => sprintf( "*%s*\n%s", __( 'Notes', 'notifycrew' ), $reminder->comments ),
+					'text' => self::fit_text( sprintf( "*%s*\n%s", __( 'Notes', 'notifycrew' ), $reminder->comments ), self::MAX_SECTION ),
 				),
 			);
 		}
@@ -450,6 +473,37 @@ class Slack_Service {
 		}
 
 		return $payload;
+	}
+
+	/**
+	 * Length of a text the way Slack measures it (UTF-16 code units: an emoji counts as two).
+	 *
+	 * @param string $text Text.
+	 * @return int
+	 */
+	public static function text_length( string $text ): int {
+		return mb_strlen( $text, 'UTF-8' ) + (int) preg_match_all( '/[\x{10000}-\x{10FFFF}]/u', $text );
+	}
+
+	/**
+	 * Shorten a text to fit a Slack limit, ending it with an ellipsis when cut.
+	 *
+	 * Slack rejects the whole message when one block is over its limit, so every
+	 * user-written text is fitted before it goes into a block.
+	 *
+	 * @param string $text Text.
+	 * @param int    $max  Maximum length (see text_length()).
+	 * @return string
+	 */
+	public static function fit_text( string $text, int $max ): string {
+		if ( self::text_length( $text ) <= $max ) {
+			return $text;
+		}
+		$cut = mb_substr( $text, 0, $max - 1, 'UTF-8' );
+		while ( '' !== $cut && self::text_length( $cut ) > $max - 1 ) {
+			$cut = mb_substr( $cut, 0, -1, 'UTF-8' );
+		}
+		return rtrim( $cut ) . '…';
 	}
 
 	/**

@@ -154,7 +154,7 @@ class Frontend_Service {
 								<select id="ncrw_front_team_id" name="ncrw_team_id" required></select>
 
 								<label for="ncrw_front_title"><?php esc_html_e( 'Title', 'notifycrew' ); ?> *</label>
-								<input type="text" id="ncrw_front_title" name="ncrw_title" required/>
+								<input type="text" id="ncrw_front_title" name="ncrw_title" maxlength="255" required/>
 
 								<label for="ncrw_front_datetime"><?php esc_html_e( 'Scheduled Date & Time', 'notifycrew' ); ?> *</label>
 								<select id="ncrw_front_quick_hours" name="ncrw_quick_hours">
