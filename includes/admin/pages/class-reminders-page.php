@@ -394,7 +394,7 @@ class Reminders_Page {
 					</tr>
 					<tr>
 						<th scope="row"><label for="ncrw_title"><?php esc_html_e( 'Title', 'notifycrew' ); ?> <span class="required">*</span></label></th>
-						<td><input type="text" id="ncrw_title" name="ncrw_title" class="regular-text" required value="<?php echo esc_attr( (string) $v['title'] ); ?>"/></td>
+						<td><input type="text" id="ncrw_title" name="ncrw_title" class="regular-text" maxlength="255" required value="<?php echo esc_attr( (string) $v['title'] ); ?>"/></td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="ncrw_quick_hours"><?php esc_html_e( 'Quick Schedule', 'notifycrew' ); ?></label></th>

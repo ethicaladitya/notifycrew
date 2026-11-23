@@ -82,7 +82,7 @@ class Reminder_Service {
 					'team_id'         => $team_id,
 					'user_id'         => $user_id,
 					'member_email'    => $member_email,
-					'title'           => sanitize_text_field( $data['title'] ?? '' ),
+					'title'           => self::sanitize_title( (string) ( $data['title'] ?? '' ) ),
 					'remind_at'       => sanitize_text_field( $data['remind_at'] ?? '' ),
 					'task_link'       => esc_url_raw( $data['task_link'] ?? '' ),
 					'comments'        => sanitize_textarea_field( $data['comments'] ?? '' ),
@@ -289,7 +289,7 @@ class Reminder_Service {
 			$format[]          = '%d';
 		}
 		if ( isset( $data['title'] ) ) {
-			$update['title'] = sanitize_text_field( $data['title'] );
+			$update['title'] = self::sanitize_title( (string) $data['title'] );
 			$format[]        = '%s';
 		}
 		if ( isset( $data['remind_at'] ) ) {
@@ -338,6 +338,18 @@ class Reminder_Service {
 		);
 
 		return false !== $result;
+	}
+
+	/**
+	 * Sanitize a reminder title and keep it within the 255-character column.
+	 *
+	 * A longer title made the database insert fail; it is now shortened instead.
+	 *
+	 * @param string $title Raw title.
+	 * @return string
+	 */
+	private static function sanitize_title( string $title ): string {
+		return trim( mb_substr( sanitize_text_field( $title ), 0, 255, 'UTF-8' ) );
 	}
 
 	/**
