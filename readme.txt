@@ -4,7 +4,7 @@ Tags: slack, reminders, notifications, slack integration, scheduler
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -181,6 +181,12 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 
 == Changelog ==
 
+= 1.2.1 =
+* Fix: a reminder could be sent to Slack twice when WordPress's scheduled run, "Retry now" and the REST API overlapped. Now only one sending run happens at a time and each reminder is claimed before it is sent.
+* Fix: a reminder with a very long title, long notes or a very long link was rejected by Slack and never arrived. Long text is now shortened to fit Slack's limits (the notification preview keeps the full title).
+* Fix: a title longer than 255 characters could not be saved. It is now shortened, and the title fields stop at 255 characters.
+* Large backlogs are sent in batches of 25, with the next batch scheduled right away, so one run can't time out halfway.
+
 = 1.2.0 =
 * New: Site alerts. Get a Slack message when WordPress, plugin or theme updates are available, when automatic updates run or fail, and when a plugin or theme crashes the site. Each alert is off until you turn it on under Reminders > Settings, and there is a "Send test alert" button.
 * New: choose the timezone NotifyCrew uses for reminders under Reminders > Settings. It follows your site's timezone by default.
@@ -212,6 +218,9 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 * Initial release of NotifyCrew.
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+Reliability fixes: no more duplicate Slack messages when runs overlap, and reminders with long titles or notes now arrive instead of failing.
 
 = 1.2.0 =
 New site alerts for Slack: updates available, automatic update results and plugin crashes. Plus a timezone setting for reminders. Nothing changes until you turn them on.

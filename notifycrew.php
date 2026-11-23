@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       NotifyCrew - Team reminders and site alerts for Slack
  * Description:       Team reminders and site alerts for Slack: scheduled reminders per team, plus messages when updates are due, fail, or a plugin crashes.
- * Version:           1.2.0
+ * Version:           1.2.1
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Aditya
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'NCRW_VERSION', '1.2.0' );
+define( 'NCRW_VERSION', '1.2.1' );
 define( 'NCRW_DB_VERSION', '2.5.0' );
 define( 'NCRW_FILE', __FILE__ );
 define( 'NCRW_DIR', plugin_dir_path( __FILE__ ) );
