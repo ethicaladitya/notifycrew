@@ -250,11 +250,13 @@ class Rest_Service {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_process(): \WP_REST_Response {
-		Cron_Service::get_instance()->process();
+		$ran = Cron_Service::get_instance()->process();
 		return new \WP_REST_Response(
 			array(
 				'success' => true,
-				'message' => __( 'Processing complete.', 'notifycrew' ),
+				'message' => $ran
+					? __( 'Processing complete.', 'notifycrew' )
+					: __( 'Another run is already sending reminders. Anything due goes out within a few minutes.', 'notifycrew' ),
 			),
 			200
 		);

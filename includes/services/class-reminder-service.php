@@ -451,11 +451,12 @@ class Reminder_Service {
 	}
 
 	/**
-	 * Retrieve reminders that should be processed now.
+	 * Retrieve reminders that should be processed now, oldest first.
 	 *
+	 * @param int $limit Most rows to return (one cron run sends a bounded batch).
 	 * @return Reminder[]
 	 */
-	public function get_due_for_processing(): array {
+	public function get_due_for_processing( int $limit = 25 ): array {
 		global $wpdb;
 
 		$now = gmdate( 'Y-m-d H:i:s' );
@@ -468,14 +469,50 @@ class Reminder_Service {
 				   AND remind_at <= %s
 				   AND attempts < %d
 				   AND (next_attempt_at IS NULL OR next_attempt_at <= %s)
-				 ORDER BY remind_at ASC",
+				 ORDER BY remind_at ASC
+				 LIMIT %d",
 				$now,
 				self::MAX_ATTEMPTS,
-				$now
+				$now,
+				max( 1, $limit )
 			)
 		);
 
 		return array_map( array( Reminder::class, 'from_row' ), $rows ? $rows : array() );
+	}
+
+	/**
+	 * Claim a due reminder for sending, atomically.
+	 *
+	 * Pushes next_attempt_at into the future only if the row is still due and untouched since it was read, so
+	 * two overlapping runs can never both send it. If the run dies mid-send, the claim expires and the reminder
+	 * is retried; mark_sent() and mark_failed_attempt() replace it as soon as the send returns.
+	 *
+	 * @param Reminder $reminder       Reminder as read by get_due_for_processing().
+	 * @param int      $claim_seconds  How long the claim holds.
+	 * @return bool True when this run owns the reminder.
+	 */
+	public function claim( Reminder $reminder, int $claim_seconds ): bool {
+		global $wpdb;
+
+		$now = time();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$claimed = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->prefix}ncrw_reminders
+				 SET next_attempt_at = %s
+				 WHERE id = %d
+				   AND status = 'pending'
+				   AND attempts = %d
+				   AND (next_attempt_at IS NULL OR next_attempt_at <= %s)",
+				gmdate( 'Y-m-d H:i:s', $now + max( 60, $claim_seconds ) ),
+				$reminder->id,
+				$reminder->attempts,
+				gmdate( 'Y-m-d H:i:s', $now )
+			)
+		);
+
+		return 1 === (int) $claimed;
 	}
 
 	/**

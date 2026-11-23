@@ -53,6 +53,8 @@ delete_option( 'ncrw_slack_channel' );
 delete_option( Settings_Page::OPTION_NAME );
 delete_option( 'ncrw_alerts_notified' );
 delete_option( 'ncrw_alerts_last_error' );
+delete_option( Cron_Service::LOCK_OPTION );
+wp_clear_scheduled_hook( Cron_Service::HOOK . '_more' );
 wp_clear_scheduled_hook( 'ncrw_site_alerts_check' );
 
 // Remove any leftover transients created by the admin forms.
