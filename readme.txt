@@ -185,7 +185,7 @@ This service is provided by Google LLC: [terms of service](https://policies.goog
 * Fix: a reminder could be sent to Slack twice when WordPress's scheduled run, "Retry now" and the REST API overlapped. Now only one sending run happens at a time and each reminder is claimed before it is sent.
 * Fix: a reminder with a very long title, long notes or a very long link was rejected by Slack and never arrived. Long text is now shortened to fit Slack's limits (the notification preview keeps the full title).
 * Fix: a title longer than 255 characters could not be saved. It is now shortened, and the title fields stop at 255 characters.
-* Large backlogs are sent in batches of 25, with the next batch scheduled right away, so one run can't time out halfway.
+* Large backlogs are sent in batches of 25, with the next batch scheduled a minute later, so one run can't time out halfway.
 
 = 1.2.0 =
 * New: Site alerts. Get a Slack message when WordPress, plugin or theme updates are available, when automatic updates run or fail, and when a plugin or theme crashes the site. Each alert is off until you turn it on under Reminders > Settings, and there is a "Send test alert" button.
